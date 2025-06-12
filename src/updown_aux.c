@@ -74,23 +74,22 @@ WtI_CHANGESTAT_FN(i__dsociomatrix){
       Vertex above = 0;
       double min_above = INFINITY;
       double min_below = INFINITY;
-        for (Vertex k = 1; k <= N_NODES; k++) {
-          if (k == t || k == j || R[t][k] == 0) continue;
+      for (Vertex k = 1; k <= N_NODES; k++) {
+        if (k == t || k == j || R[t][k] == 0) continue;
 
-          else if (R[t][k] > r_j) {
-            if (R[t][k] - r_j < min_below) { // New difference between R[t][k] and R[t][j] that's smaller but below
+        else if (R[t][k] > r_j) {
+          if (R[t][k] - r_j < min_below) { // New difference between R[t][k] and R[t][j] that's smaller but below
               min_below = R[t][k] - r_j;
               below = k;
-            }
-          }
-          else if (R[t][k] < r_j) {
-            if (r_j - R[t][k] < min_above) { // New difference between R[t][k] and R[t][j] that's smaller but above
-              min_above = r_j - R[t][k];
-              above = k;
-            }
           }
         }
-
+        else if (R[t][k] < r_j) {
+          if (r_j - R[t][k] < min_above) { // New difference between R[t][k] and R[t][j] that's smaller but above
+            min_above = r_j - R[t][k];
+            above = k;
+          }
+        }
+      }
       udsm[t][j][0] = below;
       udsm[t][j][1] = above;
     }
