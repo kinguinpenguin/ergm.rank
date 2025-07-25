@@ -8,12 +8,84 @@
  *  Copyright 2008-2025 Statnet Commons
  */
 
+#include <functional>
+
+extern "C" {
 #include "wtchangestat_rank.h"
+}
 
 typedef struct {
   Vertex up;
   Vertex down;
 } Pair;
+
+// Iterator for up/down traversal in c_edgecov_rank
+class UpDownIterator {
+public:
+  UpDownIterator(Vertex v1, Vertex v2, double **sm, Pair **udsm, double v12_old, double v12_new, bool up, bool end = false)
+    : v1_(v1), v2_(v2), sm_(sm), udsm_(udsm), v12_old_(v12_old), v12_new_(v12_new), up_(up) {
+    if(end) {
+      v3_ = 0;
+      return;
+    }
+    v3_ = v2_;
+    if(up_) {
+      while (udsm_[v1_][v3_].down && sm_[v1_][udsm_[v1_][v3_].down] == v12_old_) {
+        v3_ = udsm_[v1_][v3_].down;
+      }
+      advance_to_valid_up();
+    } else {
+      while (udsm_[v1_][v3_].up && sm_[v1_][udsm_[v1_][v3_].up] == v12_old_) {
+        v3_ = udsm_[v1_][v3_].up;
+      }
+      advance_to_valid_down();
+    }
+  }
+  Vertex operator*() const { return v3_; }
+  UpDownIterator& operator++() {
+    if(up_) {
+      v3_ = udsm_[v1_][v3_].up;
+      advance_to_valid_up();
+    } else {
+      v3_ = udsm_[v1_][v3_].down;
+      advance_to_valid_down();
+    }
+    return *this;
+  }
+  bool operator!=(const UpDownIterator& other) const { return v3_ != other.v3_; }
+private:
+  void advance_to_valid_up() {
+    while (v3_ && (v3_ == v2_ || v3_ == v1_ || sm_[v1_][v3_] > v12_new_)) {
+      v3_ = udsm_[v1_][v3_].up;
+    }
+  }
+  void advance_to_valid_down() {
+    while (v3_ && (v3_ == v2_ || v3_ == v1_ || sm_[v1_][v3_] < v12_new_)) {
+      v3_ = udsm_[v1_][v3_].down;
+    }
+  }
+  Vertex v1_, v2_, v3_;
+  double **sm_;
+  Pair **udsm_;
+  double v12_old_, v12_new_;
+  bool up_;
+};
+
+class UpDownRange {
+public:
+  UpDownRange(Vertex v1, Vertex v2, double **sm, Pair **udsm, double v12_old, double v12_new, bool up)
+    : v1_(v1), v2_(v2), sm_(sm), udsm_(udsm), v12_old_(v12_old), v12_new_(v12_new), up_(up) {}
+  UpDownIterator begin() const { return UpDownIterator(v1_, v2_, sm_, udsm_, v12_old_, v12_new_, up_, false); }
+  UpDownIterator end() const { return UpDownIterator(v1_, v2_, sm_, udsm_, v12_old_, v12_new_, up_, true); }
+private:
+  Vertex v1_, v2_;
+  double **sm_;
+  Pair **udsm_;
+  double v12_old_, v12_new_;
+  bool up_;
+};
+
+extern "C" {
 
 WtC_CHANGESTAT_FN(c_edgecov_rank) {
   GET_AUX_STORAGE(0, double *, sm);
@@ -22,33 +94,22 @@ WtC_CHANGESTAT_FN(c_edgecov_rank) {
   Vertex v2=head;
   double v12_old = sm[tail][head];
   double v12_new = weight;
+
   if (v12_new > v12_old) { // New is above, so iterate upwards
-    Vertex v3 = v2;
-    while (udsm[v1][v3].down && sm[v1][udsm[v1][v3].down] == v12_old) { // iterate down to look for alters with same rank value
-      v3 = udsm[v1][v3].down;
-    }
-    /* Now at bottom alter with same rank value, can iterate up now */
-    for (; v3 && sm[v1][v3] <= v12_new; v3 = udsm[v1][v3].up) {
-      if(v3 == v2 || v3 == v1) continue;
+    for (Vertex v3 : UpDownRange(v1, v2, sm, udsm, v12_old, v12_new, true)) {
       double v123_covdiff=INPUT_PARAM[(v1-1)*N_NODES + (v2-1)] - INPUT_PARAM[(v1-1)*N_NODES + (v3-1)];
-      if(v123_covdiff == 0) continue; // If covariate value is 0, don't bother looking up the ranking of v3 by v1.
+      if(v123_covdiff == 0) continue;
       double v13_old = sm[v1][v3];
-      if (v12_old < v13_old) CHANGE_STAT[0] += v123_covdiff; // previously below
-      if (v12_new > v13_old) CHANGE_STAT[0] += v123_covdiff; // now above
+      if (v12_old < v13_old) CHANGE_STAT[0] += v123_covdiff;
+      if (v12_new > v13_old) CHANGE_STAT[0] += v123_covdiff;
     }
   } else { // New is below, so iterate downwards
-    Vertex v3 = v2;
-    while (udsm[v1][v3].up && sm[v1][udsm[v1][v3].up] == v12_old) { // iterate up to look for alters with same rank value
-      v3 = udsm[v1][v3].up;
-    }
-    // Now at top alter with same rank value, can iterate down now
-    for (; v3 && sm[v1][v3] >= v12_new; v3 = udsm[v1][v3].down) {
-      if(v3 == v2 || v3 == v1) continue;
+    for (Vertex v3 : UpDownRange(v1, v2, sm, udsm, v12_old, v12_new, false)) {
       double v123_covdiff=INPUT_PARAM[(v1-1)*N_NODES + (v2-1)] - INPUT_PARAM[(v1-1)*N_NODES + (v3-1)];
-      if(v123_covdiff == 0) continue; // If covariate value is 0, don't bother looking up the ranking of v3 by v1.
+      if(v123_covdiff == 0) continue;
       double v13_old = sm[v1][v3];
-      if (v12_old > v13_old) CHANGE_STAT[0] -= v123_covdiff; // previously above
-      if (v12_new < v13_old) CHANGE_STAT[0] -= v123_covdiff; // now below
+      if (v12_old > v13_old) CHANGE_STAT[0] -= v123_covdiff;
+      if (v12_new < v13_old) CHANGE_STAT[0] -= v123_covdiff;
     }
   }
   /*GET_AUX_STORAGE(0, double *, sm);
@@ -133,7 +194,7 @@ WtC_CHANGESTAT_FN(c_inconsistency_cov_rank){
       double v12_ref = INPUT_PARAM[(v1-1)*N_NODES+(v2-1)];
       double v12_old = sm[tail][head];
       double v12_new = weight;
-      
+
       for(Vertex v3=1; v3 <= N_NODES; v3++){
 	if(v3==v2 || v3==v1) continue;
 	double v123_cov = INPUT_PARAM[cov_start + (v1-1)*N_NODES*N_NODES + (v2-1)*N_NODES + (v3-1)];
@@ -155,7 +216,7 @@ WtC_CHANGESTAT_FN(c_inconsistency_cov_rank){
       }
 }
 
-WtS_CHANGESTAT_FN(s_inconsistency_cov_rank){ 
+WtS_CHANGESTAT_FN(s_inconsistency_cov_rank){
   GET_AUX_STORAGE(double *, sm);
   unsigned int cov_start = N_NODES*N_NODES;
   for(Vertex v1=1; v1 <= N_NODES; v1++){
@@ -166,10 +227,10 @@ WtS_CHANGESTAT_FN(s_inconsistency_cov_rank){
 	if(v3==v2 || v3==v1) continue;
 	double v123_cov = INPUT_PARAM[cov_start + (v1-1)*N_NODES*N_NODES + (v2-1)*N_NODES + (v3-1)];
 	if(v123_cov==0) continue;
-	unsigned int 
+	unsigned int
 	  v123 = v12>sm[v1][v3],
 	  v123_ref = v12_ref>INPUT_PARAM[(v1-1)*N_NODES+(v3-1)];
-	if(v123!=v123_ref) 
+	if(v123!=v123_ref)
 	  CHANGE_STAT[0]+=v123_cov;
       }
     }
@@ -187,23 +248,23 @@ WtC_CHANGESTAT_FN(c_deference){
 	  double v13_new = GETNEWWTOLD_M(v1,v3,v13_old);
 
 	  for(Vertex v2=1; v2 <= N_NODES; v2++){
-	    if(v2==v1 || v3==v2 || 
-	       (tail!=v1 && tail!=v3 && 
+	    if(v2==v1 || v3==v2 ||
+	       (tail!=v1 && tail!=v3 &&
 		head!=v1 && head!=v2 && head!=v3)) continue;
 	    double v32_old = sm[v3][v2];
 	    double v12_old = sm[v1][v2];
 	    double v32_new = GETNEWWTOLD_M(v3,v2,v32_old);
 	    double v12_new = GETNEWWTOLD_M(v1,v2,v12_old);
-	    if(v32_old>v31_old && v13_old>v12_old) 
+	    if(v32_old>v31_old && v13_old>v12_old)
 	      CHANGE_STAT[0]--;
-	    if(v32_new>v31_new && v13_new>v12_new) 
+	    if(v32_new>v31_new && v13_new>v12_new)
 	      CHANGE_STAT[0]++;
 	  }
 	}
       }
 }
 
-WtS_CHANGESTAT_FN(s_deference){ 
+WtS_CHANGESTAT_FN(s_deference){
   GET_AUX_STORAGE(double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v3=1; v3 <= N_NODES; v3++){
@@ -211,7 +272,7 @@ WtS_CHANGESTAT_FN(s_deference){
       double v31 = sm[v3][v1], v13 = sm[v1][v3];
       for(Vertex v2=1; v2 <= N_NODES; v2++){
 	if(v2==v1 || v3==v2) continue;
-	if(sm[v3][v2]>v31 && v13>sm[v1][v2]) 
+	if(sm[v3][v2]>v31 && v13>sm[v1][v2])
 	  CHANGE_STAT[0]++;
       }
     }
@@ -240,9 +301,9 @@ WtC_CHANGESTAT_FN(c_nodeicov_rank){
 	    CHANGE_STAT[j] -= v23_covdiff;
 	}
       }
-} 
+}
 
-WtS_CHANGESTAT_FN(s_nodeicov_rank){ 
+WtS_CHANGESTAT_FN(s_nodeicov_rank){
   unsigned int oshift = N_INPUT_PARAMS / N_CHANGE_STATS;
   GET_AUX_STORAGE(double *, sm);
   for (Vertex v1=1; v1 <= N_NODES; v1++){
@@ -264,25 +325,25 @@ WtS_CHANGESTAT_FN(s_nodeicov_rank){
 WtC_CHANGESTAT_FN(c_nonconformity){
   GET_AUX_STORAGE(double *, sm);
       Vertex v1=tail;
-      
+
       for(Vertex v2=1; v2 <= N_NODES; v2++){
 	if(v2==v1) continue;
-	
+
 	for(Vertex v3=1; v3 <= N_NODES; v3++){
 	  if(v3==v2 || v3==v1) continue;
-	  
+
 	  double v13_old=sm[v1][v3];
 	  double v23=sm[v2][v3];
 	  double v13_new = GETNEWWTOLD_M(v1,v3,v13_old);
-	  
+
 	  for(Vertex v4=1; v4 <= N_NODES; v4++){
-	    if(v4==v3 || v4==v2 || v4==v1 || 
+	    if(v4==v3 || v4==v2 || v4==v1 ||
 	       (head!=v3 && head!=v4)) continue;
-	    
+
 	    double v14_old=sm[v1][v4];
 	    double v24=sm[v2][v4];
 	    double v14_new = GETNEWWTOLD_M(v1,v4,v14_old);
-	    
+
 	    if((v13_old>v14_old)!=(v23>v24)) CHANGE_STAT[0]--;
 	    if((v13_new>v14_new)!=(v23>v24)) CHANGE_STAT[0]++;
 	  }
@@ -313,7 +374,7 @@ WtS_CHANGESTAT_FN(s_nonconformity){
 WtC_CHANGESTAT_FN(c_local1_nonconformity){
   GET_AUX_STORAGE(double *, sm);
       Vertex v1=tail;
-      
+
       for(Vertex v2=1; v2 <= N_NODES; v2++){
 	if(v2==v1) continue;
 	double v12_old=sm[v1][v2];
@@ -328,17 +389,17 @@ WtC_CHANGESTAT_FN(c_local1_nonconformity){
 
 	  double v32_old=sm[v3][v2];
 	  double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	  
+
 	  for(Vertex v4=1; v4 <= N_NODES; v4++){
 	    if(v4==v3 || v4==v2 || v4==v1 ||
 	       (head!=v4 && head!=v3 && head!=v2)) continue;
 
 	    double v14_old=sm[v1][v4];
 	    double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
-	  
+
 	    double v34_old=sm[v3][v4];
 	    double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	    if(v13_old>v12_old && v12_old<=v14_old && v32_old>v34_old) CHANGE_STAT[0]--;
 	    if(v13_new>v12_new && v12_new<=v14_new && v32_new>v34_new) CHANGE_STAT[0]++;
 	  }
@@ -346,32 +407,32 @@ WtC_CHANGESTAT_FN(c_local1_nonconformity){
       }
 
       Vertex v3=tail;
-      
+
       for(Vertex v1=1; v1 <= N_NODES; v1++){
 	if(v1==v3) continue;
 	double v13_old=sm[v1][v3];
 	double v13_new=GETNEWWTOLD_M(v1,v3,v13_old);
-	
+
 	for(Vertex v2=1; v2 <= N_NODES; v2++){
 	  if(v2==v3 || v2==v1) continue;
 	    double v12_old=sm[v1][v2];
 	    double v12_new=GETNEWWTOLD_M(v1,v2,v12_old);
-	    
+
 	    if(v13_old<=v12_old && v13_new<=v12_new) continue;
-	    
+
 	    double v32_old=sm[v3][v2];
 	    double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	    
+
 	    for(Vertex v4=1; v4 <= N_NODES; v4++){
 	      if(v4==v3 || v4==v2 || v4==v1 ||
 		 (head!=v4 && head!=v2 && head!=v1)) continue;
-	      
+
 	      double v14_old=sm[v1][v4];
 	      double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
-	      
+
 	      double v34_old=sm[v3][v4];
 	      double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	      if(v13_old>v12_old && v12_old<=v14_old && v32_old>v34_old) CHANGE_STAT[0]--;
 	      if(v13_new>v12_new && v12_new<=v14_new && v32_new>v34_new) CHANGE_STAT[0]++;
 	    }
@@ -381,7 +442,7 @@ WtC_CHANGESTAT_FN(c_local1_nonconformity){
 
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
-WtS_CHANGESTAT_FN(s_local1_nonconformity){ 
+WtS_CHANGESTAT_FN(s_local1_nonconformity){
   GET_AUX_STORAGE(double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -390,7 +451,7 @@ WtS_CHANGESTAT_FN(s_local1_nonconformity){
       for(Vertex v3=1; v3 <= N_NODES; v3++){
 	if(v3==v2 || v3==v1) continue;
 	double v13=sm[v1][v3];
-	if(v13<=v12) continue;	
+	if(v13<=v12) continue;
 	double v32=sm[v3][v2];
 	for(Vertex v4=1; v4 <= N_NODES; v4++){
 	  if(v4==v3 || v4==v2 || v4==v1) continue;
@@ -415,12 +476,12 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
 	  if(v3==v2 || v3==v1) continue;
 	  double v13_old=sm[v1][v3];
 	  double v13_new=GETNEWWTOLD_M(v1,v3,v13_old);
-	  
+
 	  if(v13_old<=v12_old && v13_new<=v12_new) continue;
-	  
+
 	  double v32_old=sm[v3][v2];
 	  double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	  
+
 	  for(Vertex v4=1; v4 <= N_NODES; v4++){
 	    if(v4==v3 || v4==v2 || v4==v1 ||
 	       (head!=v2 && head!=v3 && head!=v4)) continue;
@@ -428,13 +489,13 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
 	    double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
 	    double v34_old=sm[v3][v4];
 	    double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	    if(v13_old>v12_old && v14_old<=v12_old && v34_old>v32_old) CHANGE_STAT[0]--;
 	    if(v13_new>v12_new && v14_new<=v12_new && v34_new>v32_new) CHANGE_STAT[0]++;
 	  }
 	}
       }
-    
+
       for(Vertex v1=1; v1 <= N_NODES; v1++){
 	for(Vertex v2=1; v2 <= N_NODES; v2++){
 	  if(v2==v1) continue;
@@ -444,12 +505,12 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
 	  if(v3==v2 || v3==v1) continue;
 	  double v13_old=sm[v1][v3];
 	  double v13_new=GETNEWWTOLD_M(v1,v3,v13_old);
-	  
+
 	  if(v13_old<=v12_old && v13_new<=v12_new) continue;
-	  
+
 	  double v32_old=sm[v3][v2];
 	  double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	  
+
 	  for(Vertex v4=1; v4 <= N_NODES; v4++){
 	    if(v4==v3 || v4==v2 || v4==v1 ||
 	       (head!=v2 && head!=v3 && head!=v4)) continue;
@@ -457,7 +518,7 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
 	    double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
 	    double v34_old=sm[v3][v4];
 	    double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	    if(v13_old>v12_old && v14_old<=v12_old && v34_old>v32_old) CHANGE_STAT[0]--;
 	    if(v13_new>v12_new && v14_new<=v12_new && v34_new>v32_new) CHANGE_STAT[0]++;
 	  }
@@ -465,7 +526,7 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
       }
 }
 
-WtS_CHANGESTAT_FN(s_local2_nonconformity){ 
+WtS_CHANGESTAT_FN(s_local2_nonconformity){
   GET_AUX_STORAGE(double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -492,7 +553,7 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
 WtC_CHANGESTAT_FN(c_localAND_nonconformity){
   GET_AUX_STORAGE(double *, sm);
       Vertex v1=tail;
-      
+
       for(Vertex v2=1; v2 <= N_NODES; v2++){
 	if(v2==v1) continue;
 	double v12_old=sm[v1][v2];
@@ -507,7 +568,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 
 	  double v32_old=sm[v3][v2];
 	  double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	  
+
 	  for(Vertex v4=1; v4 <= N_NODES; v4++){
 	    if(v4==v3 || v4==v2 || v4==v1 ||
 	       (head!=v4 && head!=v3 && head!=v2)) continue;
@@ -516,10 +577,10 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 	    double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
 
 	    if(v13_old<=v14_old && v13_new<=v14_new) continue;
-	    
+
 	    double v34_old=sm[v3][v4];
 	    double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	    if(v13_old>v12_old && v13_old>v14_old && v12_old<=v14_old && v32_old>v34_old) CHANGE_STAT[0]--;
 	    if(v13_new>v12_new && v13_new>v14_new && v12_new<=v14_new && v32_new>v34_new) CHANGE_STAT[0]++;
 	  }
@@ -527,34 +588,34 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
       }
 
       Vertex v3=tail;
-      
+
       for(Vertex v1=1; v1 <= N_NODES; v1++){
 	if(v1==v3) continue;
 	double v13_old=sm[v1][v3];
 	double v13_new=GETNEWWTOLD_M(v1,v3,v13_old);
-	
+
 	for(Vertex v2=1; v2 <= N_NODES; v2++){
 	  if(v2==v3 || v2==v1) continue;
 	    double v12_old=sm[v1][v2];
 	    double v12_new=GETNEWWTOLD_M(v1,v2,v12_old);
-	    
+
 	    if(v13_old<=v12_old && v13_new<=v12_new) continue;
-	    
+
 	    double v32_old=sm[v3][v2];
 	    double v32_new=GETNEWWTOLD_M(v3,v2,v32_old);
-	    
+
 	    for(Vertex v4=1; v4 <= N_NODES; v4++){
 	      if(v4==v3 || v4==v2 || v4==v1 ||
 		 (head!=v4 && head!=v2 && head!=v1)) continue;
-	      
+
 	      double v14_old=sm[v1][v4];
 	      double v14_new=GETNEWWTOLD_M(v1,v4,v14_old);
 
 	      if(v13_old<=v14_old && v13_new<=v14_new) continue;
-	      
+
 	      double v34_old=sm[v3][v4];
 	      double v34_new=GETNEWWTOLD_M(v3,v4,v34_old);
-	    
+
 	      if(v13_old>v12_old && v13_old>v14_old && v12_old<=v14_old && v32_old>v34_old) CHANGE_STAT[0]--;
 	      if(v13_new>v12_new && v13_new>v14_new && v12_new<=v14_new && v32_new>v34_new) CHANGE_STAT[0]++;
 	    }
@@ -564,7 +625,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
-WtS_CHANGESTAT_FN(s_localAND_nonconformity){ 
+WtS_CHANGESTAT_FN(s_localAND_nonconformity){
   GET_AUX_STORAGE(double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -573,12 +634,12 @@ WtS_CHANGESTAT_FN(s_localAND_nonconformity){
       for(Vertex v3=1; v3 <= N_NODES; v3++){
 	if(v3==v2 || v3==v1) continue;
 	double v13=sm[v1][v3];
-	if(v13<=v12) continue;	
+	if(v13<=v12) continue;
 	double v32=sm[v3][v2];
 	for(Vertex v4=1; v4 <= N_NODES; v4++){
 	  if(v4==v3 || v4==v2 || v4==v1) continue;
 	  double v14=sm[v1][v4];
-	  if(v13<=v14) continue;	
+	  if(v13<=v14) continue;
 	  double v34=sm[v3][v4];
 	  if(v32>v34 && v12<=v14) CHANGE_STAT[0]++;
 	}
@@ -591,7 +652,7 @@ WtS_CHANGESTAT_FN(s_localAND_nonconformity){
 
 WtD_FROM_S_FN(d_nonconformity_decay)
 
-WtS_CHANGESTAT_FN(s_nonconformity_decay){ 
+WtS_CHANGESTAT_FN(s_nonconformity_decay){
   GET_AUX_STORAGE(double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -614,7 +675,7 @@ WtS_CHANGESTAT_FN(s_nonconformity_decay){
 
 WtD_FROM_S_FN(d_nonconformity_thresholds)
 
-WtS_CHANGESTAT_FN(s_nonconformity_thresholds){ 
+WtS_CHANGESTAT_FN(s_nonconformity_thresholds){
   GET_AUX_STORAGE(double *, sm);
     for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -636,4 +697,6 @@ WtS_CHANGESTAT_FN(s_nonconformity_thresholds){
       }
     }
   }
+}
+
 }
