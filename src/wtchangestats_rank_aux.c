@@ -10,7 +10,7 @@
 #include "ergm_wtedgetree.h"
 #include "ergm_wtchangestat.h"
 #include "ergm_storage.h"
-#include "updown_aux.h"
+#include "wtchangestats_rank_aux.h"
 
 // C++ shim?
 
