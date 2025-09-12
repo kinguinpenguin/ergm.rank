@@ -216,8 +216,8 @@ bool up_tail_head_k_old = false,
 // ties, we can safely assume that if an if() statement hasn't
 // triggered, it never will.
 #define defer_perm(i, j, l, dir)                                        \
-  if (sm[l][j] > sm[l][i] && sm[i][l] > sm[i][j]) { CHANGE_STAT[0]--; if(! dir ## _ ## i ## _ ## j ## _ ## l ## _ ## old) {dir ## _ ## i ## _ ## j ## _ ## l ## _ ## old = true; Rprintf("Triggered: " # dir "_" # i "_" # j "_" # l "_old\n");} } \
-  if (GETNEWWTSM(l, j) > GETNEWWTSM(l, i) && GETNEWWTSM(i, l) > GETNEWWTSM(i, j)) { CHANGE_STAT[0]++;  if(! dir ## _ ## i ## _ ## j ## _ ## l ## _ ## new) {dir ## _ ## i ## _ ## j ## _ ## l ## _ ## new = true; Rprintf("Triggered: " # dir "_" # i "_" # j "_" # l "_new\n");} }
+  if (sm[l][j] > sm[l][i] && sm[i][l] > sm[i][j]) { CHANGE_STAT[0]--; }\
+  if (GETNEWWTSM(l, j) > GETNEWWTSM(l, i) && GETNEWWTSM(i, l) > GETNEWWTSM(i, j)) { CHANGE_STAT[0]++;}
 
 WtC_CHANGESTAT_FN(c_deference){
   GET_AUX_STORAGE(0, double *, sm);
@@ -233,7 +233,6 @@ WtC_CHANGESTAT_FN(c_deference){
       defer_perm(k, head, tail, up);
     }
   } else { // New is below, so iterate downwards
-    const char dir[] = "down";
     for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
       defer_perm(tail, head, k, down);
       defer_perm(tail, k, head, down);
@@ -267,9 +266,9 @@ WtC_CHANGESTAT_FN(c_deference){
       }*/
 }
 
+
 WtS_CHANGESTAT_FN(s_deference){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v3=1; v3 <= N_NODES; v3++){
       if(v3==v1) continue;
@@ -328,9 +327,41 @@ WtS_CHANGESTAT_FN(s_nodeicov_rank){
   }
 }
 
-WtC_CHANGESTAT_FN(c_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+#define nonconform_perm(i, j, k, l, dir)\
+  if (sm[l][j] > sm[l][k] && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; }\
+  if (GETNEWWTSM(l, j) > GETNEWWTSM(l, k) && !(GETNEWWTSM(i,j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++;}
+
+WtC_CHANGESTAT_FN(c_nonconformity) {
+  GET_AUX_STORAGE(0, double *, sm);
+  GET_AUX_STORAGE(1, Pair *, udsm);
+  Vertex vth_old = sm[tail][head];
+  Vertex vth_new = weight;
+  if (vth_new > vth_old) { // New is above, so iterate upwards
+    for(Vertex l=1; l <= N_NODES; l++) {
+      for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+        // i or l can be tail
+        if (l != k && l != tail && l != head) {
+          nonconform_perm(tail, head, k, l, up);
+          nonconform_perm(tail, k, head, l, up);
+          nonconform_perm(l, k, head, tail, up);
+          nonconform_perm(l, head, k, tail, up);
+        }
+      }
+    }
+  } else { // New is below, so iterate downwards
+    for(Vertex l=1; l <= N_NODES; l++) {
+      for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+        if (l != k && l != tail && l != head) {
+          nonconform_perm(tail, head, k, l, down);
+          nonconform_perm(tail, k, head, l, down);
+          nonconform_perm(l, k, head, tail, down);
+          nonconform_perm(l, head, k, tail, down);
+        }
+      }
+    }
+  }
+
+  // GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
 
       for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -359,8 +390,7 @@ WtC_CHANGESTAT_FN(c_nonconformity){
 }
 
 WtS_CHANGESTAT_FN(s_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 < v1; v2++){
       for(Vertex v3=1; v3 <= N_NODES; v3++){
@@ -380,8 +410,7 @@ WtS_CHANGESTAT_FN(s_nonconformity){
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtC_CHANGESTAT_FN(c_local1_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
 
       for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -452,8 +481,7 @@ WtC_CHANGESTAT_FN(c_local1_nonconformity){
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtS_CHANGESTAT_FN(s_local1_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
       if(v2==v1) continue;
@@ -476,8 +504,7 @@ WtS_CHANGESTAT_FN(s_local1_nonconformity){
 
 
 WtC_CHANGESTAT_FN(c_local2_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
       for(Vertex v2=1; v2 <= N_NODES; v2++){
 	if(v2==v1) continue;
@@ -538,8 +565,7 @@ WtC_CHANGESTAT_FN(c_local2_nonconformity){
 }
 
 WtS_CHANGESTAT_FN(s_local2_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
       if(v2==v1) continue;
@@ -563,8 +589,7 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtC_CHANGESTAT_FN(c_localAND_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
 
       for(Vertex v2=1; v2 <= N_NODES; v2++){
@@ -639,8 +664,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtS_CHANGESTAT_FN(s_localAND_nonconformity){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
       if(v2==v1) continue;
@@ -667,8 +691,7 @@ WtS_CHANGESTAT_FN(s_localAND_nonconformity){
 WtD_FROM_S_FN(d_nonconformity_decay)
 
 WtS_CHANGESTAT_FN(s_nonconformity_decay){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
   for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
       if(v2==v1) continue;
@@ -691,8 +714,7 @@ WtS_CHANGESTAT_FN(s_nonconformity_decay){
 WtD_FROM_S_FN(d_nonconformity_thresholds)
 
 WtS_CHANGESTAT_FN(s_nonconformity_thresholds){
-  GET_AUX_STORAGE(void, sm_raw);
-  double **sm = (double **)sm_raw;
+  GET_AUX_STORAGE(0, double *, sm);
     for(Vertex v1=1; v1 <= N_NODES; v1++){
     for(Vertex v2=1; v2 <= N_NODES; v2++){
       if(v2==v1) continue;

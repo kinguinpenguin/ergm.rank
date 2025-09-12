@@ -278,7 +278,7 @@ InitWtErgmTerm.rank.nonconformity<-function(nw, arglist, ...) {
   list(name=name,
        coef.names=coef.names,
        inputs=inputs,
-       dependence=TRUE, auxiliaries=~.sociomatrix("numeric"))
+       dependence=TRUE, auxiliaries=~.sociomatrix("numeric") + .updown)
 }
 
 #' @export
