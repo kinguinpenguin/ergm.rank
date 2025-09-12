@@ -337,8 +337,8 @@ WtC_CHANGESTAT_FN(c_nonconformity) {
   Vertex vth_old = sm[tail][head];
   Vertex vth_new = weight;
   if (vth_new > vth_old) { // New is above, so iterate upwards
-    for(Vertex l=1; l <= N_NODES; l++) {
       for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+        for(Vertex l=1; l <= N_NODES; l++) {
         // i or l can be tail
         if (l != k && l != tail && l != head) {
           nonconform_perm(tail, head, k, l, up);
@@ -349,8 +349,8 @@ WtC_CHANGESTAT_FN(c_nonconformity) {
       }
     }
   } else { // New is below, so iterate downwards
-    for(Vertex l=1; l <= N_NODES; l++) {
       for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+        for(Vertex l=1; l <= N_NODES; l++) {
         if (l != k && l != tail && l != head) {
           nonconform_perm(tail, head, k, l, down);
           nonconform_perm(tail, k, head, l, down);
@@ -360,7 +360,7 @@ WtC_CHANGESTAT_FN(c_nonconformity) {
       }
     }
   }
-
+  /*
   // GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
 
@@ -386,7 +386,7 @@ WtC_CHANGESTAT_FN(c_nonconformity) {
 	    if((v13_new>v14_new)!=(v23>v24)) CHANGE_STAT[0]++;
 	  }
 	}
-      }
+      }*/
 }
 
 WtS_CHANGESTAT_FN(s_nonconformity){
