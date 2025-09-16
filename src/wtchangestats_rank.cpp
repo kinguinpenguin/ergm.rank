@@ -586,9 +586,43 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
   }
 }
 
+#define nonconform_local_global_perm(i, j, k, l)\
+  if ((sm[i][l] > sm[i][j]) && (sm[i][l] > sm[i][k]) && (sm[l][j] > sm[l][k]) && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; }\
+  if ((GETNEWWTSM(i, l) > GETNEWWTSM(i,j)) && (GETNEWWTSM(i,l) > GETNEWWTSM(i, k)) && (GETNEWWTSM(l, j) > GETNEWWTSM(l, k)) && !(GETNEWWTSM(i, j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++;}
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtC_CHANGESTAT_FN(c_localAND_nonconformity){
+  GET_AUX_STORAGE(0, double *, sm);
+  GET_AUX_STORAGE(1, Pair *, udsm);
+  Vertex vth_old = sm[tail][head];
+  Vertex vth_new = weight;
+  Vertex v1 = tail;
+  Vertex v2 = head;
+  for (Vertex v4 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+    for(Vertex v3=1; v3 <= N_NODES; v3++) {
+    // i or l can be tail
+      if (v3 != v4 && v3 != v1 && v3 != v2) {
+        nonconform_local_global_perm(v1, v2, v4, v3);
+        nonconform_local_global_perm(v1, v4, v2, v3);
+        nonconform_local_global_perm(v3, v4, v2, v1);
+        nonconform_local_global_perm(v3, v2, v4, v1);
+      }
+    }
+  }
+  Vertex v3 = tail;
+  for (Vertex v1 = 1; v1 <= N_NODES; v1++) {
+    if (v1 == v3 || v1 == v2) continue;
+    for (Vertex v4 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+    // i or l can be tail
+      if (v4 != v1 && v4 != v2 && v4 != v3) {
+        nonconform_local_global_perm(v1, v2, v4, v3);
+        nonconform_local_global_perm(v1, v4, v2, v3);
+        nonconform_local_global_perm(v3, v4, v2, v1);
+        nonconform_local_global_perm(v3, v2, v4, v1);
+      }
+    }
+  }
+  /*
   GET_AUX_STORAGE(0, double *, sm);
       Vertex v1=tail;
 
@@ -658,7 +692,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 	      if(v13_new>v12_new && v12_new<=v14_new && v32_new>v34_new) CHANGE_STAT[0]++;
 	    }
 	}
-      }
+      }*/
 }
 
 
