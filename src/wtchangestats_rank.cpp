@@ -586,7 +586,7 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
   }
 }
 
-#define nonconform_local_global_perm(i, j, k, l)\
+#define nonconform_local_global_perm(i, j, l, k)\
   if ((sm[i][l] > sm[i][j]) && (sm[i][l] > sm[i][k]) && (sm[l][j] > sm[l][k]) && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; }\
   if ((GETNEWWTSM(i, l) > GETNEWWTSM(i,j)) && (GETNEWWTSM(i,l) > GETNEWWTSM(i, k)) && (GETNEWWTSM(l, j) > GETNEWWTSM(l, k)) && !(GETNEWWTSM(i, j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++;}
 
@@ -603,16 +603,16 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
     // i or l can be tail
       if (v3 != v4 && v3 != v1 && v3 != v2) {
         // v1 = tail orientation
-        nonconform_local_global_perm(v1, v2, v4, v3);
-        nonconform_local_global_perm(v1, v4, v2, v3);
-        nonconform_local_global_perm(v3, v4, v2, v1);
-        nonconform_local_global_perm(v3, v2, v4, v1);
-
-        // v3 = tail orientation
-        nonconform_local_global_perm(v3, v2, v1, v4);
-        nonconform_local_global_perm(v3, v1, v2, v4);
         nonconform_local_global_perm(v1, v2, v3, v4);
+        nonconform_local_global_perm(v3, v2, v1, v4);
         nonconform_local_global_perm(v1, v3, v2, v4);
+        nonconform_local_global_perm(v1, v4, v3, v2);
+
+        // --- v3 = tail orientation ---
+        nonconform_local_global_perm(v3, v2, v1, v4);
+        nonconform_local_global_perm(v1, v2, v3, v4);
+        nonconform_local_global_perm(v3, v1, v2, v4);
+        nonconform_local_global_perm(v3, v4, v1, v2);
       }
     }
   }
