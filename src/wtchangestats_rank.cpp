@@ -602,13 +602,13 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
     for(Vertex v3=1; v3 <= N_NODES; v3++) {
     // i or l can be tail
       if (v3 != v4 && v3 != v1 && v3 != v2) {
-        // v1 = tail orientation (already here)
+        // v1 = tail orientation
         nonconform_local_global_perm(v1, v2, v4, v3);
         nonconform_local_global_perm(v1, v4, v2, v3);
         nonconform_local_global_perm(v3, v4, v2, v1);
         nonconform_local_global_perm(v3, v2, v4, v1);
 
-        // v3 = tail orientation (newly added)
+        // v3 = tail orientation
         nonconform_local_global_perm(v3, v2, v1, v4);
         nonconform_local_global_perm(v3, v1, v2, v4);
         nonconform_local_global_perm(v1, v2, v3, v4);
