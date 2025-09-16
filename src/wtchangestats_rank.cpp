@@ -602,23 +602,17 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
     for(Vertex v3=1; v3 <= N_NODES; v3++) {
     // i or l can be tail
       if (v3 != v4 && v3 != v1 && v3 != v2) {
+        // v1 = tail orientation (already here)
         nonconform_local_global_perm(v1, v2, v4, v3);
         nonconform_local_global_perm(v1, v4, v2, v3);
         nonconform_local_global_perm(v3, v4, v2, v1);
         nonconform_local_global_perm(v3, v2, v4, v1);
-      }
-    }
-  }
-  Vertex v3 = tail;
-  for (Vertex v1 = 1; v1 <= N_NODES; v1++) {
-    if (v1 == v3 || v1 == v2) continue;
-    for (Vertex v4 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-    // i or l can be tail
-      if (v4 != v1 && v4 != v2 && v4 != v3) {
-        nonconform_local_global_perm(v1, v2, v4, v3);
-        nonconform_local_global_perm(v1, v4, v2, v3);
-        nonconform_local_global_perm(v3, v4, v2, v1);
-        nonconform_local_global_perm(v3, v2, v4, v1);
+
+        // v3 = tail orientation (newly added)
+        nonconform_local_global_perm(v3, v2, v1, v4);
+        nonconform_local_global_perm(v3, v1, v2, v4);
+        nonconform_local_global_perm(v1, v2, v3, v4);
+        nonconform_local_global_perm(v1, v3, v2, v4);
       }
     }
   }
