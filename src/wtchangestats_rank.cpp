@@ -586,9 +586,9 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
   }
 }
 
-#define nonconform_local_global_perm(i, j, l, k)\
-  if ((sm[i][l] > sm[i][j]) && (sm[i][l] > sm[i][k]) && (sm[l][j] > sm[l][k]) && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; }\
-  if ((GETNEWWTSM(i, l) > GETNEWWTSM(i,j)) && (GETNEWWTSM(i,l) > GETNEWWTSM(i, k)) && (GETNEWWTSM(l, j) > GETNEWWTSM(l, k)) && !(GETNEWWTSM(i, j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++;}
+#define nonconform_local_global_perm(i, j, k, l)                      \
+  if ((sm[i][l] > sm[i][j]) && (sm[i][l] > sm[i][k]) && (sm[l][j] > sm[l][k]) && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; Rprintf("Triggered: " # i "=%u " # j "=%u " # k "=%u " # l "=%u old\n", i, j, k, l);}\
+  if ((GETNEWWTSM(i, l) > GETNEWWTSM(i,j)) && (GETNEWWTSM(i,l) > GETNEWWTSM(i, k)) && (GETNEWWTSM(l, j) > GETNEWWTSM(l, k)) && !(GETNEWWTSM(i, j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++; Rprintf("Triggered: i=" # i "=%u j=" # j "=%u k=" # k "=%u l=" # l "=%u new\n", i, j, k, l);}
 
 // From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
 WtC_CHANGESTAT_FN(c_localAND_nonconformity){
@@ -596,23 +596,80 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
   GET_AUX_STORAGE(1, Pair *, udsm);
   Vertex vth_old = sm[tail][head];
   Vertex vth_new = weight;
-  Vertex v1 = tail;
-  Vertex v2 = head;
-  for (Vertex v4 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-    for(Vertex v3=1; v3 <= N_NODES; v3++) {
-    // i or l can be tail
-      if (v3 != v4 && v3 != v1 && v3 != v2) {
-        // v1 = tail orientation
-        nonconform_local_global_perm(v1, v2, v3, v4);
-        nonconform_local_global_perm(v3, v2, v1, v4);
-        nonconform_local_global_perm(v1, v3, v2, v4);
-        nonconform_local_global_perm(v1, v4, v3, v2);
+  for (Vertex v3 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+    for(Vertex v4 = 1; v4 <= N_NODES; v4++) {
+      // i or l can be tail 
+      if (v4 != v3 && v4 != tail && v4 != head) {
+        // tail, head, v3, v4
+        nonconform_local_global_perm(tail, head, v3, v4);
+        // tail, head, v4, v3
+        nonconform_local_global_perm(tail, head, v4, v3);
+        // tail, v3, head, v4
+        nonconform_local_global_perm(tail, v3, head, v4);
+        // tail, v3, v4, head
+        nonconform_local_global_perm(tail, v3, v4, head);
+        // tail, v4, head, v3
+        nonconform_local_global_perm(tail, v4, head, v3);
+        // tail, v4, v3, head
+        nonconform_local_global_perm(tail, v4, v3, head);
 
-        // --- v3 = tail orientation ---
-        nonconform_local_global_perm(v3, v2, v1, v4);
-        nonconform_local_global_perm(v1, v2, v3, v4);
-        nonconform_local_global_perm(v3, v1, v2, v4);
-        nonconform_local_global_perm(v3, v4, v1, v2);
+        // head, tail, v3, v4
+        nonconform_local_global_perm(head, tail, v3, v4);
+        // head, tail, v4, v3
+        nonconform_local_global_perm(head, tail, v4, v3);
+        // head, v3, tail, v4
+        nonconform_local_global_perm(head, v3, tail, v4);
+        // head, v3, v4, tail
+        nonconform_local_global_perm(head, v3, v4, tail);
+        // head, v4, tail, v3
+        nonconform_local_global_perm(head, v4, tail, v3);
+        // head, v4, v3, tail
+        nonconform_local_global_perm(head, v4, v3, tail);
+
+        // v3, tail, head, v4
+        nonconform_local_global_perm(v3, tail, head, v4);
+        // v3, tail, v4, head
+        nonconform_local_global_perm(v3, tail, v4, head);
+        // v3, head, tail, v4
+        nonconform_local_global_perm(v3, head, tail, v4);
+        // v3, head, v4, tail
+        nonconform_local_global_perm(v3, head, v4, tail);
+        // v3, v4, tail, head
+        nonconform_local_global_perm(v3, v4, tail, head);
+        // v3, v4, head, tail
+        nonconform_local_global_perm(v3, v4, head, tail);
+
+        // v4, tail, head, v3
+        nonconform_local_global_perm(v4, tail, head, v3);
+        // v4, tail, v3, head
+        nonconform_local_global_perm(v4, tail, v3, head);
+        // v4, head, tail, v3
+        nonconform_local_global_perm(v4, head, tail, v3);
+        // v4, head, v3, tail
+        nonconform_local_global_perm(v4, head, v3, tail);
+        // v4, v3, tail, head
+        nonconform_local_global_perm(v4, v3, tail, head);
+        // v4, v3, head, tail
+        nonconform_local_global_perm(v4, v3, head, tail);
+
+
+        
+        // nonconform_local_global_perm(tail, head, v3, v4);
+        // nonconform_local_global_perm(tail, v3, head, v4);
+        // nonconform_local_global_perm(tail, v3, v4, head);
+        // nonconform_local_global_perm(v3, head, tail, v4);
+
+        
+        // nonconform_local_global_perm(tail, head, v3, v4);
+        // nonconform_local_global_perm(v3, head, tail, v4);
+        // nonconform_local_global_perm(tail, v3, head, v4);
+        // nonconform_local_global_perm(tail, v4, v3, head);
+
+        // // --- v3 = tail orientation ---
+        // nonconform_local_global_perm(v3, head, tail, v4);
+        // nonconform_local_global_perm(tail, head, v3, v4);
+        // nonconform_local_global_perm(v3, tail, head, v4);
+        // nonconform_local_global_perm(v3, v4, tail, head);
       }
     }
   }
