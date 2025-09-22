@@ -80,7 +80,6 @@ WtS_CHANGESTAT_FN(s_edgecov_rank){
   }
 }
 
-
 WtC_CHANGESTAT_FN(c_inconsistency_rank){
   GET_AUX_STORAGE(0, double *, sm);
   GET_AUX_STORAGE(1, Pair *, udsm);
@@ -188,24 +187,6 @@ WtS_CHANGESTAT_FN(s_inconsistency_cov_rank){
   }
 }
 
-// Keep track of which have already been triggered, so that we only print once.
-bool up_tail_head_k_old = false,
-  up_tail_k_head_old = false,
-  up_head_k_tail_old = false,
-  up_k_head_tail_old = false,
-  down_tail_head_k_old = false,
-  down_tail_k_head_old = false,
-  down_head_k_tail_old = false,
-  down_k_head_tail_old = false,
-  up_tail_head_k_new = false,
-  up_tail_k_head_new = false,
-  up_head_k_tail_new = false,
-  up_k_head_tail_new = false,
-  down_tail_head_k_new = false,
-  down_tail_k_head_new = false,
-  down_head_k_tail_new = false,
-  down_k_head_tail_new = false;
-
 // See, e.g., https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html and
 // https://gcc.gnu.org/onlinedocs/cpp/Concatenation.html for
 // documentation: these basically construct the above variable names
@@ -215,7 +196,7 @@ bool up_tail_head_k_old = false,
 // After a sufficiently long MCMC run under a proposal that permits
 // ties, we can safely assume that if an if() statement hasn't
 // triggered, it never will.
-#define defer_perm(i, j, l, dir)                                        \
+#define defer_perm(i, j, l)                                        \
   if (sm[l][j] > sm[l][i] && sm[i][l] > sm[i][j]) { CHANGE_STAT[0]--; }\
   if (GETNEWWTSM(l, j) > GETNEWWTSM(l, i) && GETNEWWTSM(i, l) > GETNEWWTSM(i, j)) { CHANGE_STAT[0]++;}
 
@@ -224,21 +205,12 @@ WtC_CHANGESTAT_FN(c_deference){
   GET_AUX_STORAGE(1, Pair *, udsm);
   Vertex vth_old = sm[tail][head];
   Vertex vth_new = weight;
-  if (vth_new > vth_old) { // New is above, so iterate upwards
-    for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-      // i or l can be tail
-      defer_perm(tail, head, k, up);
-      defer_perm(tail, k, head, up);
-      defer_perm(head, k, tail, up);
-      defer_perm(k, head, tail, up);
-    }
-  } else { // New is below, so iterate downwards
-    for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-      defer_perm(tail, head, k, down);
-      defer_perm(tail, k, head, down);
-      defer_perm(head, k, tail, down);
-      defer_perm(k, head, tail, down);
-    }
+  for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+    // i or l can be tail
+    defer_perm(tail, head, k);
+    defer_perm(tail, k, head);
+    defer_perm(head, k, tail);
+    defer_perm(k, head, tail);
   }
   /*
       for(Vertex v1=1; v1 <= N_NODES; v1++){
@@ -327,7 +299,7 @@ WtS_CHANGESTAT_FN(s_nodeicov_rank){
   }
 }
 
-#define nonconform_perm(i, j, k, l, dir)\
+#define nonconform_perm(i, j, k, l)\
   if (sm[l][j] > sm[l][k] && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; }\
   if (GETNEWWTSM(l, j) > GETNEWWTSM(l, k) && !(GETNEWWTSM(i,j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++;}
 
@@ -336,27 +308,14 @@ WtC_CHANGESTAT_FN(c_nonconformity) {
   GET_AUX_STORAGE(1, Pair *, udsm);
   Vertex vth_old = sm[tail][head];
   Vertex vth_new = weight;
-  if (vth_new > vth_old) { // New is above, so iterate upwards
-      for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-        for(Vertex l=1; l <= N_NODES; l++) {
-        // i or l can be tail
-        if (l != k && l != tail && l != head) {
-          nonconform_perm(tail, head, k, l, up);
-          nonconform_perm(tail, k, head, l, up);
-          nonconform_perm(l, k, head, tail, up);
-          nonconform_perm(l, head, k, tail, up);
-        }
-      }
-    }
-  } else { // New is below, so iterate downwards
-      for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
-        for(Vertex l=1; l <= N_NODES; l++) {
-        if (l != k && l != tail && l != head) {
-          nonconform_perm(tail, head, k, l, down);
-          nonconform_perm(tail, k, head, l, down);
-          nonconform_perm(l, k, head, tail, down);
-          nonconform_perm(l, head, k, tail, down);
-        }
+  for (Vertex k : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
+    for(Vertex l=1; l <= N_NODES; l++) {
+    // i or l can be tail
+    if (l != k && l != tail && l != head) {
+      nonconform_perm(tail, head, k, l);
+      nonconform_perm(tail, k, head, l);
+      nonconform_perm(l, k, head, tail);
+      nonconform_perm(l, head, k, tail);
       }
     }
   }
@@ -598,6 +557,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
   double vth_new = weight;
   for (Vertex v3 : UpDownRange(tail, head, sm, udsm, vth_old, vth_new)) {
     for(Vertex v4 = 1; v4 <= N_NODES; v4++) {
+      // Avoid redundant permutations and self-loops
       if ((v4 == v3 || v4 == tail || v4 == head) ||
           (sm[tail][v4] <= MAX(vth_old, vth_new) &&
            sm[tail][v4] >= MIN(vth_old, vth_new) &&
@@ -605,7 +565,7 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
 
       // tail, head, v3, v4
       nonconform_local_global_perm(tail, head, v3, v4);
-      // tail, head, v4, v3
+      // tail, head, v4, v3 
       nonconform_local_global_perm(tail, head, v4, v3);
       // tail, v3, head, v4
       nonconform_local_global_perm(tail, v3, head, v4);
