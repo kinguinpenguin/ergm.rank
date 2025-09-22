@@ -590,7 +590,7 @@ WtS_CHANGESTAT_FN(s_local2_nonconformity){
   if ((sm[i][l] > sm[i][j]) && (sm[i][l] > sm[i][k]) && (sm[l][j] > sm[l][k]) && !(sm[i][j] > sm[i][k])) { CHANGE_STAT[0]--; Rprintf("Triggered: " # i "=%u " # j "=%u " # k "=%u " # l "=%u old\n", i, j, k, l);}\
   if ((GETNEWWTSM(i, l) > GETNEWWTSM(i,j)) && (GETNEWWTSM(i,l) > GETNEWWTSM(i, k)) && (GETNEWWTSM(l, j) > GETNEWWTSM(l, k)) && !(GETNEWWTSM(i, j) > GETNEWWTSM(i, k))) { CHANGE_STAT[0]++; Rprintf("Triggered: i=" # i "=%u j=" # j "=%u k=" # k "=%u l=" # l "=%u new\n", i, j, k, l);}
 
-// From Krivitsky and Butts paper, here, v1=i, v2=j, v3=l, v4=k.
+// From Krivitsky and Butts paper, here, v1=i, v2=j, v3=k, v4=l.
 WtC_CHANGESTAT_FN(c_localAND_nonconformity){
   GET_AUX_STORAGE(0, double *, sm);
   GET_AUX_STORAGE(1, Pair *, udsm);
@@ -612,32 +612,6 @@ WtC_CHANGESTAT_FN(c_localAND_nonconformity){
         nonconform_local_global_perm(tail, v4, head, v3);
         // tail, v4, v3, head
         nonconform_local_global_perm(tail, v4, v3, head);
-
-        // head, tail, v3, v4
-        nonconform_local_global_perm(head, tail, v3, v4);
-        // head, tail, v4, v3
-        nonconform_local_global_perm(head, tail, v4, v3);
-        // head, v3, tail, v4
-        nonconform_local_global_perm(head, v3, tail, v4);
-        // head, v3, v4, tail
-        nonconform_local_global_perm(head, v3, v4, tail);
-        // head, v4, tail, v3
-        nonconform_local_global_perm(head, v4, tail, v3);
-        // head, v4, v3, tail
-        nonconform_local_global_perm(head, v4, v3, tail);
-
-        // v3, tail, head, v4
-        nonconform_local_global_perm(v3, tail, head, v4);
-        // v3, tail, v4, head
-        nonconform_local_global_perm(v3, tail, v4, head);
-        // v3, head, tail, v4
-        nonconform_local_global_perm(v3, head, tail, v4);
-        // v3, head, v4, tail
-        nonconform_local_global_perm(v3, head, v4, tail);
-        // v3, v4, tail, head
-        nonconform_local_global_perm(v3, v4, tail, head);
-        // v3, v4, head, tail
-        nonconform_local_global_perm(v3, v4, head, tail);
 
         // v4, tail, head, v3
         nonconform_local_global_perm(v4, tail, head, v3);
