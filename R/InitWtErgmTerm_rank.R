@@ -200,7 +200,7 @@ InitWtErgmTerm.rank.nodeicov<-function (nw, arglist, ..., ergm.rank.version=pack
   list(name="nodeicov_rank", soname="ergm.rank",
        coef.names=coef.names,
        inputs=c(nodecov),
-       dependence=TRUE, auxiliaries=~.sociomatrix("numeric"))
+       dependence=TRUE, auxiliaries=~.sociomatrix("numeric") + .updown)
 }
 
 #' @templateVar name rank.nonconformity

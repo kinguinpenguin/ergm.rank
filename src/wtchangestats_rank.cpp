@@ -255,6 +255,39 @@ WtS_CHANGESTAT_FN(s_deference){
 }
 
 WtC_CHANGESTAT_FN(c_nodeicov_rank){
+  GET_AUX_STORAGE(0, double *, sm);
+  GET_AUX_STORAGE(1, Pair *, udsm);
+  unsigned int oshift = N_INPUT_PARAMS / N_CHANGE_STATS;
+  Vertex v1=tail;
+  Vertex v2=head;
+  double v12_old = sm[tail][head];
+  double v12_new = weight;
+  if (v12_new > v12_old) { // New is above, so iterate upwards
+    for (Vertex v3 : UpDownRange(v1, v2, sm, udsm, v12_old, v12_new)) {
+      if(v3==v2 || v3==v1) continue;
+      double v13_old=sm[v1][v3];
+      for(unsigned int j=0, o=0; j<N_CHANGE_STATS; j++, o+=oshift){
+        double v23_covdiff = INPUT_PARAM[v2+o-1] - INPUT_PARAM[v3+o-1];
+        if(v12_old<v13_old)
+          CHANGE_STAT[j] += v23_covdiff;
+        if(v12_new>v13_old)
+          CHANGE_STAT[j] += v23_covdiff;
+      }
+    }
+  } else { // New is below, so iterate downwards
+    for (Vertex v3 : UpDownRange(v1, v2, sm, udsm, v12_old, v12_new)) {
+      if(v3==v2 || v3==v1) continue;
+      double v13_old=sm[v1][v3];
+      for(unsigned int j=0, o=0; j<N_CHANGE_STATS; j++, o+=oshift){
+        double v23_covdiff = INPUT_PARAM[v2+o-1] - INPUT_PARAM[v3+o-1];
+        if(v12_old>v13_old)
+          CHANGE_STAT[j] -= v23_covdiff;
+        if(v12_new<v13_old)
+          CHANGE_STAT[j] -= v23_covdiff;
+      }
+    }
+  }
+  /*
   GET_AUX_STORAGE(void, sm_raw);
   double **sm = (double **)sm_raw;
   unsigned int oshift = N_INPUT_PARAMS / N_CHANGE_STATS;
@@ -277,6 +310,7 @@ WtC_CHANGESTAT_FN(c_nodeicov_rank){
         CHANGE_STAT[j] -= v23_covdiff;
     }
   }
+  */
 }
 
 WtS_CHANGESTAT_FN(s_nodeicov_rank){
