@@ -8,6 +8,7 @@
 #  Copyright 2008-2025 Statnet Commons
 ################################################################################
 
+
 #' @templateVar name AlterSwap
 #' @aliases InitWtErgmProposal.AlterSwap
 #' @title A proposal that swaps values of two alters incident on an ego
@@ -22,3 +23,17 @@ InitWtErgmProposal.AlterSwap <- function(arguments, nw) {
   MHproposal
 }
 
+
+#' @templateVar name AdjacentAlterSwap
+#' @aliases InitWtErgmProposal.AdjacentAlterSwap
+#' @title A proposal that swaps values of two adjacently-ranked alters incident on an ego
+#' @description This proposal randomly selects a dyad \eqn{(i,j)}, then finds an alter \eqn{j'} ranked immediately above \eqn{j}, and proposes to swap their values.
+#' @template ergmProposal-general
+#' @concept valued
+#' @concept ordinal
+NULL
+
+InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
+  MHproposal <- list(name = "AdjacentAlterSwap", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
+  MHproposal
+}

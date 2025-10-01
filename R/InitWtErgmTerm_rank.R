@@ -281,7 +281,6 @@ InitWtErgmTerm.rank.nonconformity<-function(nw, arglist, ...) {
        dependence=TRUE, auxiliaries=~.sociomatrix("numeric") + .updown)
 }
 
-#' @export
 InitWtErgmTerm..updown <- function(nw, arglist, ...) {
   # Validate and extract arguments if any (add below if needed)
   a <- check.ErgmTerm(nw, arglist, directed = TRUE, bipartite = FALSE,

@@ -9,6 +9,9 @@
  */
 
 #include "ergm_wtMHproposal.h"
+#include "ergm_MHstorage.h"
+#include "wtchangestats_rank_aux.h"
+
 
 /*********************
  void MH_AlterSwap
@@ -54,4 +57,40 @@ WtMH_P_FN(MH_AlterSwap){
     MHp->toggletail[0]=MH_FAILED;
     MHp->togglehead[0]=MH_UNSUCCESSFUL;	
   }
+}
+
+
+/*********************
+ void MH_AdjacentAlterSwap
+
+ MH algorithm for ERGMs over complete orderings that selects an ego
+ and an alter and promotes the alter up; assumes that the ordering is
+ complete.
+*********************/
+WtMH_P_FN(MH_AdjacentAlterSwap){  
+  GET_AUX_STORAGE(0, double *, sm);
+  GET_AUX_STORAGE(1, Pair *, udsm);
+
+  if(MHp->ntoggles == 0) { // Initialize AlterSwap 
+    MHp->ntoggles=2;
+    return;
+  }
+
+  Vertex tail, head1;
+  GetRandDyad(&tail, &head1, nwp);
+
+  Vertex head2 = udsm[tail][head1].up;
+
+  if(head2 == 0) {
+    MHp->toggletail[0] = MH_FAILED;
+    MHp->togglehead[0] = MH_CONSTRAINT;
+    return;
+  }
+
+  Mtail[0] = Mtail[1] = tail;
+  Mhead[0] = head1;
+  Mhead[1] = head2;
+
+  Mweight[1] = sm[Mtail[0]][Mhead[0]];
+  Mweight[0] = sm[Mtail[1]][Mhead[1]];
 }
