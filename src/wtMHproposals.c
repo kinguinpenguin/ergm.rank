@@ -94,3 +94,16 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
   Mweight[1] = sm[Mtail[0]][Mhead[0]];
   Mweight[0] = sm[Mtail[1]][Mhead[1]];
 }
+
+/*********************
+ void MH_AdjacentAlterSwapPartial
+
+ MH algorithm for ERGMs over partial orderings that selects an ego
+ and an alter and promotes the alter up
+*********************/
+
+WtMH_P_FN(MH_AdjacentAlterSwap) {  
+  GET_AUX_STORAGE(0, double *, sm);
+  GET_AUX_STORAGE(1, Pair *, udsm);
+
+}

@@ -37,3 +37,13 @@ InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
   MHproposal <- list(name = "AdjacentAlterSwap", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
   MHproposal
 }
+
+InitWtErgmProposal.AdjacentAlterSwapPartial <- function(arguments, nw) {
+  params <- with(arguments$reference$arguments,
+                 switch(arguments$reference$name,
+                        DiscUnif = list(3L, c(a, b))))
+
+  list(name = "AdjacentAlterSwapPartial
+", iinputs = params[[1]], inputs=as.double(params[[2]]), dyadgen = ergm_dyadgen_select(arguments, nw)
+  , auxiliaries = ~ .sociomatrix("numeric") + .updown)
+}
