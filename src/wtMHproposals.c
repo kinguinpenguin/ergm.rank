@@ -11,7 +11,19 @@
 #include "ergm_wtMHproposal.h"
 #include "ergm_MHstorage.h"
 #include "wtchangestats_rank_aux.h"
+#include "ergm_dyadgen.h"
 
+#define ENSURE_CHANGED(gen) {double to; do{ to = gen; }while(to == from); return to;}
+
+static double rdunifj(double *param, double from, double fudge){
+  ENSURE_CHANGED(floor(runif(param[0], param[1]+1)));
+}
+static double lddunifj(double *param, double from, double to, double fudge){
+  return(-log(param[1]-param[0]));
+}
+static double lhdunif(double *param, double to){
+  return(0);
+}
 
 /*********************
  void MH_AlterSwap
@@ -59,6 +71,27 @@ WtMH_P_FN(MH_AlterSwap){
   }
 }
 
+/*********************
+ void MH_AlterSwapPartial
+
+ Default MH algorithm for ERGM over partial orderings
+*********************/
+
+WtMH_I_FN(Mi_Disc){
+  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);
+  MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads!=0 ? 1 : MH_FAILED;
+}
+
+WtMH_P_FN(Mp_Disc){
+  const double fudge = 0.5; // Mostly comes in when proposing from 0.
+  DyadGen *gen = (DyadGen *) MH_STORAGE;
+  double (*rj)(double *param, double from, double fudge),
+  (*ldj)(double *param, double from, double to, double fudge),
+  (*lh)(double *param, double to);
+  rj = rdunifj; 
+  ldj = lddunifj; 
+  lh = lhdunif;
+}
 
 /*********************
  void MH_AdjacentAlterSwap
@@ -101,9 +134,3 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
  MH algorithm for ERGMs over partial orderings that selects an ego
  and an alter and promotes the alter up
 *********************/
-
-WtMH_P_FN(MH_AdjacentAlterSwap) {  
-  GET_AUX_STORAGE(0, double *, sm);
-  GET_AUX_STORAGE(1, Pair *, udsm);
-
-}
