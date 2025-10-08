@@ -23,13 +23,12 @@ InitWtErgmProposal.AlterSwap <- function(arguments, nw) {
   MHproposal
 }
 
-InitWtErgmProposal.Disc  <- function(arguments, nw) {
+InitWtErgmProposal.PartialDisc  <- function(arguments, nw) {
   params <- with(arguments$reference$arguments,
                  switch(arguments$reference$name,
                         DiscUnif = list(3L, c(a, b))))
 
-  list(name = "Disc", iinputs = params[[1]], inputs=as.double(params[[2]]), dyadgen = ergm_dyadgen_select(arguments, nw)
-  , auxiliaries = ~ .sociomatrix("numeric") + .updown)
+  list(name = "PartialDisc", iinputs = params[[1]], inputs=as.double(params[[2]]), dyadgen = ergm_dyadgen_select(arguments, nw))
 }
 
 
@@ -45,3 +44,9 @@ NULL
 InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
   MHproposal <- list(name = "AdjacentAlterSwap", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
   MHproposal
+}
+
+InitWtErgmProposal.MH_AdjacentDiscUnif <- function(arguments, nw) {
+  MHproposal <- list(name = "MH_AdjacentDiscUnif", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
+  MHproposal
+}
