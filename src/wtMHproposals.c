@@ -13,38 +13,6 @@
 #include "wtchangestats_rank_aux.h"
 #include "ergm_dyadgen.h"
 
-static double rstepj(double *param, double from, double fudge) {
-  double min = param[0];
-  double max = param[1];
-  double proposal;
-
-  // Decide direction
-  if(from <= min) {
-    // Only increment if at lower bound
-    proposal = from + 1;
-  } else if(from >= max) {
-    // Only decrement if at upper bound
-    proposal = from - 1;
-  } else {
-    // Randomly pick increment or decrement
-    proposal = from + ((unif_rand() < 0.5) ? 1 : -1);
-  }
-  return proposal;
-}
-static double ldstepj(double *param, double from, double to, double fudge) {
-  // If only one direction possible (at boundary), probability = 1.
-  if((from == param[0] && to == from + 1) ||
-     (from == param[1] && to == from - 1))
-    return 0.0; // log(1)
-
-  // Otherwise, two directions possible, each with prob 0.5
-  return log(0.5);
-}
-
-static double lhstep(double *param, double to){
-  return 0.0;
-}
-
 /*********************
  void MH_AlterSwap
 
@@ -92,39 +60,55 @@ WtMH_P_FN(MH_AlterSwap){
 }
 
 /*********************
- void MH_AlterSwapPartial
+ void MH_PartialDisc
 
  Default MH algorithm for ERGM over partial orderings
 *********************/
 
-WtMH_I_FN(Mi_PartialDisc){
+WtMH_P_FN(MH_PartialDisc){
+  const double fudge = 0.5;
   MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);
-  MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads!=0 ? 1 : MH_FAILED;
-}
-
-WtMH_P_FN(Mp_PartialDisc){
-  const double fudge = 0.5; // Mostly comes in when proposing from 0.
+  MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads != 0 ? 1 : MH_FAILED;
   DyadGen *gen = (DyadGen *) MH_STORAGE;
-  double (*rj)(double *param, double from, double fudge),
-  (*ldj)(double *param, double from, double to, double fudge),
-  (*lh)(double *param, double to);
-  rj = rstepj; 
-  ldj = ldstepj; 
-  lh = lhstep;
+
   DyadGenRandDyad(Mtail, Mhead, gen);
   double edgestate = WtGetEdge(Mtail[0], Mhead[0], nwp);
-  Mweight[0] = rj(MH_DINPUTS, edgestate, fudge);
 
-  double ldjft = ldj(MH_DINPUTS, edgestate, Mweight[0], fudge),
-    ldjtf = ldj(MH_DINPUTS, Mweight[0], edgestate, fudge);
+  // --- inline rstepj ---
+  double min = 1;
+  double max = nwp->nnodes - 1;
+  double proposal;
+  if (edgestate <= min) {
+    proposal = edgestate + 1;
+  } else if (edgestate >= max) {
+    proposal = edgestate - 1;
+  } else {
+    proposal = edgestate + ((unif_rand() < 0.5) ? 1 : -1);
+  }
+  Mweight[0] = proposal;
+
+  // --- inline ldstepj ---
+  double ldjft, ldjtf;
+  if ((edgestate == min && proposal == edgestate + 1) ||
+      (edgestate == max && proposal == edgestate - 1)) {
+    ldjft = 0.0; // log(1)
+  } else {
+    ldjft = log(0.5);
+  }
+
+  if ((proposal == min && edgestate == proposal + 1) ||
+      (proposal == max && edgestate == proposal - 1)) {
+    ldjtf = 0.0; // reverse
+  } else {
+    ldjtf = log(0.5);
+  }
+
   MHp->logratio += ldjtf - ldjft;
-  // h(y)
-  MHp->logratio += lh(MH_DINPUTS, Mweight[0]) - lh(MH_DINPUTS, edgestate);
-}
 
-WtMH_F_FN(Mf_Disc){
-  DyadGenDestroy(MH_STORAGE);
-  MH_STORAGE = NULL;
+  // --- inline lhstep ---
+  MHp->logratio += 0.0; // symmetric, no Hastings correction
+
+
 }
 
 /*********************
@@ -163,13 +147,23 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
 }
 
 /*********************
- void MH_AdjacentDiscUnif
+ void MH_AdjacentAlterSwapPartial
 
  MH algorithm for ERGMs over partial orderings that selects an ego
  and an alter and promotes the alter up
 *********************/
 
-WtMH_P_FN(MH_AdjacentDiscUnif) {
+WtMH_P_FN(MH_AdjacentAlterSwapPartial) {
   GET_AUX_STORAGE(0, double *, sm);
   GET_AUX_STORAGE(1, Pair *, udsm);
+
+  // Initialize PartialDisc
+  if(MHp->ntoggles == 0) {
+    MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);  // Create dyad generator
+    DyadGen *gen = (DyadGen *) MH_STORAGE;
+    MHp->ntoggles = gen->ndyads != 0 ? 1 : MH_FAILED;     // Set number of toggles
+    return;
+  }
+
+  // later: propose increment/decrement
 }

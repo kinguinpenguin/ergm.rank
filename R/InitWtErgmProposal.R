@@ -46,7 +46,41 @@ InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
   MHproposal
 }
 
-InitWtErgmProposal.MH_AdjacentDiscUnif <- function(arguments, nw) {
-  MHproposal <- list(name = "MH_AdjacentDiscUnif", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
+InitErgmReference.PartialOrder <- function(nw, response=NULL, ...) {
+  n <- network.size(nw)
+  
+  # The range of allowable values:
+  min_val <- 1
+  max_val <- n - 1
+  
+  # Return a reference list (like other InitErgmReference.* functions)
+  list(
+    name = "PartialOrder",
+    parameters = c(min_val, max_val),
+  )
+}
+
+InitWtErgmProposal.PartialDisc <- function(arguments, nw) {
+  # Extract the sociomatrix of edge weights
+  sm <- as.matrix(nw %n% "weights")
+  if(is.null(sm)) sm <- as.matrix(as.sociomatrix(nw, attrname="weights", expand.bipartite=TRUE))
+
+  # If the network has weights, check that they're all integers
+  if(!all(is.na(sm))) {
+    noninteger <- abs(sm - round(sm)) > .Machine$double.eps^0.5
+    if(any(noninteger, na.rm=TRUE)) {
+      stop("InitWtErgmProposal.PartialDisc: all edge weights must be integers for partial order proposals.")
+    }
+  }
+  MHproposal <- list(
+    name = "PartialDisc",
+    inputs = NULL,
+    auxiliaries = ~ .sociomatrix("numeric") + .updown
+  )
+  MHproposal
+}
+
+InitWtErgmProposal.AdjacentAlterSwapPartial <- function(arguments, nw) {
+  MHproposal <- list(name = "MH_AdjacentAlterSwapPartial", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
   MHproposal
 }
