@@ -65,18 +65,19 @@ WtMH_P_FN(MH_AlterSwap){
  Default MH algorithm for ERGM over partial orderings
 *********************/
 
-WtMH_P_FN(MH_PartialDisc){
-  const double fudge = 0.5;
-  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);
-  MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads != 0 ? 1 : MH_FAILED;
-  DyadGen *gen = (DyadGen *) MH_STORAGE;
+WtMH_I_FN(Mi_PartialDisc){
+  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, TRUE);
+  MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads!=0 ? 1 : MH_FAILED;
+}
+
+WtMH_P_FN(Mp_PartialDisc){
+  GET_MH_STORAGE(DyadGen, gen);
 
   DyadGenRandDyad(Mtail, Mhead, gen);
   double edgestate = WtGetEdge(Mtail[0], Mhead[0], nwp);
 
-  // --- inline rstepj ---
   double min = 1;
-  double max = nwp->nnodes - 1;
+  double max = N_NODES - 1;
   double proposal;
   if (edgestate <= min) {
     proposal = edgestate + 1;
@@ -87,29 +88,20 @@ WtMH_P_FN(MH_PartialDisc){
   }
   Mweight[0] = proposal;
 
-  // --- inline ldstepj ---
-  double ldjft, ldjtf;
-  if ((edgestate == min && proposal == edgestate + 1) ||
-      (edgestate == max && proposal == edgestate - 1)) {
-    ldjft = 0.0; // log(1)
+  if (edgestate == min || edgestate == max) {
+    MHp->logratio = +-log(0.5);
+  }else if (proposal == min || proposal == max) {
+    MHp->logratio = +-log(0.5);
   } else {
-    ldjft = log(0.5);
+    MHp->logratio = 0;
   }
-
-  if ((proposal == min && edgestate == proposal + 1) ||
-      (proposal == max && edgestate == proposal - 1)) {
-    ldjtf = 0.0; // reverse
-  } else {
-    ldjtf = log(0.5);
-  }
-
-  MHp->logratio += ldjtf - ldjft;
-
-  // --- inline lhstep ---
-  MHp->logratio += 0.0; // symmetric, no Hastings correction
-
-
 }
+
+WtMH_F_FN(Mf_PartialDisc){
+  DyadGenDestroy(MH_STORAGE);
+  MH_STORAGE = NULL;
+}
+
 
 /*********************
  void MH_AdjacentAlterSwap
