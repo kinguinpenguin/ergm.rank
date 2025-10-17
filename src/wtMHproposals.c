@@ -89,7 +89,7 @@ WtMH_P_FN(Mp_PartialDisc){
   Mweight[0] = proposal;
 
   if (edgestate == min || edgestate == max) {
-    MHp->logratio = +log(0.5);
+    MHp->logratio = log(0.5);
   }else if (proposal == min || proposal == max) {
     MHp->logratio = -log(0.5);
   } else {
