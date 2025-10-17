@@ -66,18 +66,18 @@ WtMH_P_FN(MH_AlterSwap){
 *********************/
 
 WtMH_I_FN(Mi_PartialDisc){
-  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, TRUE);
+  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);
   MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads!=0 ? 1 : MH_FAILED;
 }
 
 WtMH_P_FN(Mp_PartialDisc){
-  GET_MH_STORAGE(DyadGen, gen);
+  DyadGen *gen = (DyadGen *) MH_STORAGE;
 
   DyadGenRandDyad(Mtail, Mhead, gen);
   double edgestate = WtGetEdge(Mtail[0], Mhead[0], nwp);
 
-  double min = 1;
-  double max = N_NODES - 1;
+  double min = MH_IINPUTS[0];
+  double max = MH_IINPUTS[1];
   double proposal;
   if (edgestate <= min) {
     proposal = edgestate + 1;
@@ -136,26 +136,4 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
 
   Mweight[1] = sm[Mtail[0]][Mhead[0]];
   Mweight[0] = sm[Mtail[1]][Mhead[1]];
-}
-
-/*********************
- void MH_AdjacentAlterSwapPartial
-
- MH algorithm for ERGMs over partial orderings that selects an ego
- and an alter and promotes the alter up
-*********************/
-
-WtMH_P_FN(MH_AdjacentAlterSwapPartial) {
-  GET_AUX_STORAGE(0, double *, sm);
-  GET_AUX_STORAGE(1, Pair *, udsm);
-
-  // Initialize PartialDisc
-  if(MHp->ntoggles == 0) {
-    MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);  // Create dyad generator
-    DyadGen *gen = (DyadGen *) MH_STORAGE;
-    MHp->ntoggles = gen->ndyads != 0 ? 1 : MH_FAILED;     // Set number of toggles
-    return;
-  }
-
-  // later: propose increment/decrement
 }

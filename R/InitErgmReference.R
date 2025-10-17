@@ -33,3 +33,39 @@ InitErgmReference.CompleteOrder <- function(nw, arglist, ...){
 
   list(name="CompleteOrder", init_methods = c("CD","zeros"))
 }
+
+
+
+InitErgmReference.PartialOrder <- function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = c("classes"),
+                      vartypes = c("numeric"),
+                      defaultvalues = list(NULL),
+                      required = c(FALSE)
+                      )
+
+  if(!is.directed(nw) && !is.bipartite(nw))
+    ergm_Init_stop("The network must be directed or bipartite.")
+
+  nalters <- if (is.bipartite(nw)) network.size(nw) - nw %v% "bipartite"
+             else network.size(nw) - 1L
+
+  if (!is.null(a$classes)) {
+    classes <- a$classes
+    if (classes > nalters) ergm_Init_stop("Number of distinct equivalence classes must not exceed the number of alters.")
+  } else classes <- nalters
+
+    # Extract the sociomatrix of edge weights
+    v <- nw %e% (nw %ergmlhs% "response")
+
+  if(!all(is.na(v))) {
+    invalid <- abs(v - round(v)) > .Machine$double.eps^0.5 |
+      v < 1 | v > nalters
+    if(any(invalid, na.rm=TRUE)) {
+      ergm_Init_stop("all edge weights must be integers between 1 and n-1 (inclusive) for partial order proposals.")
+    }
+  }
+
+  ## TODO: Provide an API for locating and calling a reference.
+  list(name = "DiscUnif", arguments = list(a = 1L, b = classes), init_methods = c("CD", "zeros"))
+}
