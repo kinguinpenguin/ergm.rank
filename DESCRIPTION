@@ -1,5 +1,5 @@
 Package: ergm.rank
-Version: 4.1.2-1585
+Version: 4.1.2-1586
 Date: 2025-10-17
 Title: Fit, Simulate and Diagnose Exponential-Family Models for Rank-Order Relational Data
 Authors@R: c(
