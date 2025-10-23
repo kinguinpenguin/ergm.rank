@@ -69,3 +69,50 @@ InitErgmReference.PartialOrder <- function(nw, arglist, ...) {
   ## TODO: Provide an API for locating and calling a reference.
   list(name = "DiscUnif", arguments = list(a = 1L, b = classes), init_methods = c("CD", "zeros"))
 }
+
+InitErgmConstraint.ranking <- function(nw, arglist, ...) {
+  a <- check.ErgmTerm(
+    nw, arglist,
+    varnames = c("M"),
+    vartypes = c("matrix"),
+    required = c(TRUE)
+  )
+  # M is the proposed sociomatrix
+  M <- a$M
+
+  if (!is.matrix(M))
+    ergm_Init_stop("M must be a sociomatrix (numeric matrix).")
+
+  n <- network.size(nw)
+  if (!all(dim(M) == c(n, n)))
+    ergm_Init_stop("M must be an n x n matrix, matching network size.")
+
+  ref_name <- nw %ergmlhs% "reference"
+
+  if (ref_name == "PartialOrder") {
+    message("Using constraint rules for PartialOrder reference.")
+    # Define behaviour for partial rankings
+    constraint_type <- "partial"
+  } else if (ref_name == "CompleteOrder") {
+    message("Using constraint rules for CompleteOrder reference.")
+    # Define behaviour for complete rankings
+    constraint_type <- "complete"
+    for (i in seq_len(n)) {
+      # Exclude the diagonal element M[i, i]
+      row_vals <- M[i, -i]
+      # Check for missing values
+      if (any(is.na(row_vals))) {
+        ergm_Init_stop("All entries of M must be filled for CompleteOrder reference.")
+      }
+
+      # Check for duplicate rankings (ties)
+      if (any(duplicated(row_vals))) {
+        ergm_Init_stop("There must be no tied rankings for CompleteOrder reference.")
+      }
+    }
+  } else {
+    ergm_Init_stop(
+      paste("Unknown reference type:", ref_name)
+    )
+  }
+}
