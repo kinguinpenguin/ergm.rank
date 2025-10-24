@@ -33,7 +33,8 @@ InitWtErgmProposal.AlterSwap <- function(arguments, nw) {
 NULL
 
 InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
-  MHproposal <- list(name = "AdjacentAlterSwap", inputs = NULL, auxiliaries = ~ .sociomatrix("numeric") + .updown)
+  M <- arguments$constraints$ranking$M
+  MHproposal <- list(name = "AdjacentAlterSwap", inputs = M, auxiliaries = ~ .sociomatrix("numeric") + .updown)
   MHproposal
 }
 

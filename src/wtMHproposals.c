@@ -62,22 +62,22 @@ WtMH_P_FN(MH_AlterSwap){
 /*********************
  void MH_PartialDisc
 
- Default MH algorithm for ERGM over partial orderings
+ Default MH algorithm for ERGM over partial orderings. Given an alter, proposes to increment up or down
 *********************/
 
 WtMH_I_FN(Mi_PartialDisc){
-  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, FALSE);
+  MH_STORAGE = DyadGenInitializeR(MHp->R, nwp, TRUE);
   MHp->ntoggles = ((DyadGen *) MH_STORAGE)->ndyads!=0 ? 1 : MH_FAILED;
 }
 
 WtMH_P_FN(Mp_PartialDisc){
-  DyadGen *gen = (DyadGen *) MH_STORAGE;
+  GET_MH_STORAGE(DyadGen, gen);
 
   DyadGenRandDyad(Mtail, Mhead, gen);
   double edgestate = WtGetEdge(Mtail[0], Mhead[0], nwp);
 
-  double min = MH_IINPUTS[0];
-  double max = MH_IINPUTS[1];
+  double min = 1;
+  double max = N_NODES - 1;
   double proposal;
   if (edgestate <= min) {
     proposal = edgestate + 1;
@@ -118,6 +118,7 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
     MHp->ntoggles=2;
     return;
   }
+  M = MHp->inputs; // To do: check if the proposed change violates M; If so, MH_FAILED
 
   Vertex tail, head1;
   GetRandDyad(&tail, &head1, nwp);
