@@ -71,9 +71,10 @@ WtMH_I_FN(Mi_PartialDisc){
 }
 
 WtMH_P_FN(Mp_PartialDisc){
+  /*
   GET_MH_STORAGE(DyadGen, gen);
 
-  DyadGenRandDyad(Mtail, Mhead, gen);
+  DyadGenRandDyad(Mtail, Mhead, gen);*/
   double edgestate = WtGetEdge(Mtail[0], Mhead[0], nwp);
 
   double min = 1;
@@ -118,12 +119,10 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
     MHp->ntoggles=2;
     return;
   }
-  M = MHp->inputs; // To do: check if the proposed change violates M; If so, MH_FAILED
-
-  Vertex tail, head1;
+  double * M = MHp->inputs; // To do: check if the proposed change violates M; If so, MH_FAILED
+  Vertex tail, head1; // head1 = j
   GetRandDyad(&tail, &head1, nwp);
-
-  Vertex head2 = udsm[tail][head1].up;
+  Vertex head2 = udsm[tail][head1].up; // head2 = j+
 
   if(head2 == 0) {
     MHp->toggletail[0] = MH_FAILED;
@@ -135,6 +134,11 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
   Mhead[0] = head1;
   Mhead[1] = head2;
 
-  Mweight[1] = sm[Mtail[0]][Mhead[0]];
-  Mweight[0] = sm[Mtail[1]][Mhead[1]];
+  // Propose to swap the values of head1 and head2 for tail
+  Mweight[1] = sm[Mtail[0]][Mhead[0]]; // New rank value of Mhead[1]
+  Mweight[0] = sm[Mtail[1]][Mhead[1]]; // New rank value of Mhead[0]
+  if (M[Mtail[0]][Mhead[0]] < Mweight[0] || M[Mtail[0]][Mhead[1]] < Mweight[1]) {
+    MHp->toggletail[0] = MH_FAILED;
+    MHp->togglehead[0] = MH_CONSTRAINT;
+  }
 }
