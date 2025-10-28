@@ -137,7 +137,9 @@ WtMH_P_FN(MH_AdjacentAlterSwap){
   // Propose to swap the values of head1 and head2 for tail
   Mweight[1] = sm[Mtail[0]][Mhead[0]]; // New rank value of Mhead[1]
   Mweight[0] = sm[Mtail[1]][Mhead[1]]; // New rank value of Mhead[0]
-  if (M[Mtail[0]][Mhead[0]] < Mweight[0] || M[Mtail[0]][Mhead[1]] < Mweight[1]) {
+  int n = nwp->nnodes;  // number of nodes in the network
+
+  if (M[Mtail[0] + n * Mhead[0]] < Mweight[0] || M[Mtail[0] + n * Mhead[1]] < Mweight[1]) {
     MHp->toggletail[0] = MH_FAILED;
     MHp->togglehead[0] = MH_CONSTRAINT;
   }
