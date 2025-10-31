@@ -69,23 +69,3 @@ InitErgmReference.PartialOrder <- function(nw, arglist, ...) {
   ## TODO: Provide an API for locating and calling a reference.
   list(name = "DiscUnif", arguments = list(a = 1L, b = classes), init_methods = c("CD", "zeros"))
 }
-
-InitErgmConstraint.ranking <- function(nw, arglist, ...) {
-  a <- check.ErgmTerm(
-    nw, arglist,
-    varnames = c("M"),
-    vartypes = c("numeric,matrix"),
-    required = c(TRUE)
-  )
-  # M is the proposed sociomatrix
-  M <- a$M
-
-  if (!is.matrix(M))
-    ergm_Init_stop("M must be a sociomatrix (numeric matrix).")
-
-  n <- network.size(nw)
-  if (!all(dim(M) == c(n, n)))
-    ergm_Init_stop("M must be an n x n matrix, matching network size.")
-
-  list(M = M)
-}
