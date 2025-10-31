@@ -8,34 +8,41 @@
 #  Copyright 2008-2025 Statnet Commons
 ################################################################################
 library(ergm.rank)
-n <- 4
-S <- 2
+n <- 7
+S <- 20
 
-M <- matrix(sample.int(n-1, n*n, replace=TRUE), n, n)
-sm0 <- M + runif(n*n)
+set.seed(0)
+M <- matrix(sample.int(n - 1, n * n, replace = TRUE), n, n)
+diag(M) <- 0
+sm0 <- M + runif(n * n)
 diag(sm0) <- 0
 sm0 <- apply(sm0, 1, rank, ties.method = "random") |> t() |> (`-`)(1)
 
 print(M)
+as.matrix(sm0, attrname = "r")
 
 nw0 <- as.network(sm0, directed = TRUE, ignore.eval = FALSE, names.eval = "r")
 
-nws <- simulate(nw0~sum(),
+nws <- simulate(nw0 ~ sum(),
                 coef = 0, response = "r",
-                reference = ~CompleteOrder, constraints = ~adjacent + ranking(M), nsim = S)
+                reference = ~CompleteOrder,
+                constraints = ~adjacent + ranking(M),
+                nsim = S)
 
 ms <- lapply(nws, as.matrix, attrname = "r")
 
 consistent_ranking1 <- function(x, m) {
-  sapply(seq_along(m), function(i)
-    sapply(seq_along(m), function(j)
-      i==j || (m[i]==m[j]) || ( (x[i]<x[j])==(m[i]<m[j])  && (x[i]>x[j])==(m[i]>m[j]) )
-      )
-    ) |> all()
+  outer(seq_along(m), seq_along(m),
+        function(i, j) {
+          i == j | m[i] == m[j] |
+            ((x[i] < x[j]) == (m[i] < m[j]) &
+             (x[i] > x[j]) == (m[i] > m[j]))
+        }) |> all()
 }
 
 consistent_ranking <- function(X, M) {
-  sapply(seq_len(nrow(M)), function(i) consistent_ranking1(X[i,], M[i,])) |> all()
+  all(sapply(seq_len(nrow(M)), function(i) consistent_ranking1(X[i, ], M[i, ])))
 }
 
-lapply(ms, consistent_ranking, M)
+stopifnot(!statnet.common::all_identical(ms))
+stopifnot(all(sapply(ms, consistent_ranking, M)))
