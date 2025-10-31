@@ -22,7 +22,7 @@
 
 .RegisterProposals <- function(){
   ergm_proposal_table("c", "CompleteOrder", "",  0, "random", "AlterSwap")
-  ergm_proposal_table("c", "CompleteOrder", "&adjacent",  0, "random", "AdjacentAlterSwap")
+  ergm_proposal_table("c", "CompleteOrder", "&adjacent|ranking",  0, "random", "AdjacentAlterSwap")
   ergm_proposal_table("c", "DiscUnif", "&adjacent",  0, "random", "PartialDisc")
 }
 
