@@ -30,7 +30,6 @@ InitWtErgmProposal.AlterSwap <- function(arguments, nw) {
 #' @template ergmProposal-general
 #' @concept valued
 #' @concept ordinal
-NULL
 
 InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
   M <- arguments$constraints$ranking$M
