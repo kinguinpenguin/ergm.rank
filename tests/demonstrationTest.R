@@ -36,9 +36,24 @@ nw2 <- simulate(newcomb[[2]] # Start with newcomb time point 2.
                 constraints = ~ adjacent + ranking(newcomb2.top5)
 )
 
-fit2 <- ergm(nw2 ~ rank.nonconformity,
+
+fit2.true <- ergm(newcomb[[2]] ~ rank.deference+rank.nonconformity("all")+
+                    rank.nonconformity("localAND"),
              response="descrank",
              reference=~CompleteOrder,
              constraints = ~ adjacent, # Sample space: make adjacent swap proposals.
-             obs.constraints = ~ ranking(newcomb2.top5) # For the constrained sampler, *also* constrain ranking.
+             control = snctrl()
 )
+
+
+fit2 <- ergm(nw2 ~ rank.deference+rank.nonconformity("all")+
+               rank.nonconformity("localAND"),
+             response="descrank",
+             reference=~CompleteOrder,
+             constraints = ~ adjacent, # Sample space: make adjacent swap proposals.
+             obs.constraints = ~ ranking(newcomb2.top5), # For the constrained sampler, *also* constrain ranking.
+             control = snctrl(init.method = "zeros")
+)
+
+summary(fit2.true)
+summary(fit2)
