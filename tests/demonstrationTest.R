@@ -7,6 +7,7 @@
 #
 #  Copyright 2008-2025 Statnet Commons
 ################################################################################
+start_time <- Sys.time()
 library(ergm.rank)
 data("newcomb")
 fit_true <- list()
@@ -99,3 +100,8 @@ print(compare_df)
 
 # Save to file
 capture.output(print(compare_df), file = "tests/demonstration_results.txt")
+
+end_time <- Sys.time()
+total_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
+cat("\nTotal computational time:", round(total_time, 2), "seconds\n",
+    file = "tests/demonstration_results.txt", append = TRUE)
