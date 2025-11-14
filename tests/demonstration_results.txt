@@ -1,33 +1,93 @@
-   week                   term  model_type      estimate          se   logLik
-1     1              deference        true -0.1529946307 0.041335569 19.01905
-2     1          nonconformity        true -0.0036641312 0.003160289 19.01905
-3     1 nonconformity.localAND        true -0.0108713169 0.010216417 19.01905
-4     1              deference constrained -0.3710861218 0.142815450 17.34272
-5     1          nonconformity constrained  0.0002584277 0.003830991 17.34272
-6     1 nonconformity.localAND constrained -0.0189785927 0.013181980 17.34272
-7     2              deference        true -0.2157190184 0.047752512 29.54702
-8     2          nonconformity        true -0.0007202219 0.003034505 29.54702
-9     2 nonconformity.localAND        true -0.0207211561 0.008512431 29.54702
-10    2              deference constrained -0.2853448783 0.104778321 14.33614
-11    2          nonconformity constrained  0.0011690484 0.004126481 14.33614
-12    2 nonconformity.localAND constrained -0.0241385280 0.013547162 14.33614
-13    3              deference        true -0.2180850470 0.046913712 34.11202
-14    3          nonconformity        true  0.0025236218 0.003193767 34.11202
-15    3 nonconformity.localAND        true -0.0309441037 0.008641214 34.11202
-16    3              deference constrained -0.3378118433 0.103672995 17.25201
-17    3          nonconformity constrained  0.0005331430 0.003939065 17.25201
-18    3 nonconformity.localAND constrained -0.0224115590 0.013526930 17.25201
-19    4              deference        true -0.2120051819 0.048074164 39.39589
-20    4          nonconformity        true  0.0038714605 0.003136058 39.39589
-21    4 nonconformity.localAND        true -0.0356036423 0.008290319 39.39589
-22    4              deference constrained -0.4360469111 0.149627286 23.06503
-23    4          nonconformity constrained  0.0034174903 0.003529187 23.06503
-24    4 nonconformity.localAND constrained -0.0327034438 0.012184485 23.06503
-25    5              deference        true -0.2881726077 0.059020112 58.14856
-26    5          nonconformity        true  0.0014909083 0.002636207 58.14856
-27    5 nonconformity.localAND        true -0.0347491597 0.007576225 58.14856
-28    5              deference constrained -0.4909635887 0.222026273 27.20306
-29    5          nonconformity constrained  0.0035391413 0.003036263 27.20306
-30    5 nonconformity.localAND constrained -0.0403841840 0.012676065 27.20306
+   week                   term model_type      estimate          se   logLik
+1     0              deference   Complete -1.570859e-01 0.039881595 19.31229
+2     0          nonconformity   Complete -4.016375e-03 0.003280733 19.31229
+3     0 nonconformity.localAND   Complete -8.570857e-03 0.010049284 19.31229
+4     0              deference      Top 5 -3.718982e-01 0.130266717 16.89257
+5     0          nonconformity      Top 5  2.741495e-04 0.003972444 16.89257
+6     0 nonconformity.localAND      Top 5 -1.866066e-02 0.013957797 16.89257
+7     1              deference   Complete -2.184457e-01 0.045700989 29.42746
+8     1          nonconformity   Complete -1.049242e-03 0.003225331 29.42746
+9     1 nonconformity.localAND   Complete -1.990293e-02 0.009376708 29.42746
+10    1              deference      Top 5 -2.864879e-01 0.094620572 13.31808
+11    1          nonconformity      Top 5  8.199889e-04 0.004014174 13.31808
+12    1 nonconformity.localAND      Top 5 -2.288896e-02 0.013373375 13.31808
+13    2              deference   Complete -2.226696e-01 0.045291453 34.21349
+14    2          nonconformity   Complete  2.507886e-03 0.003136498 34.21349
+15    2 nonconformity.localAND   Complete -3.091381e-02 0.008638301 34.21349
+16    2              deference      Top 5 -3.288691e-01 0.110295662 16.63210
+17    2          nonconformity      Top 5  7.529653e-04 0.004136744 16.63210
+18    2 nonconformity.localAND      Top 5 -2.337887e-02 0.014887296 16.63210
+19    3              deference   Complete -2.119284e-01 0.045385304 37.60684
+20    3          nonconformity   Complete  3.903120e-03 0.003157547 37.60684
+21    3 nonconformity.localAND   Complete -3.687958e-02 0.008442683 37.60684
+22    3              deference      Top 5 -4.285319e-01 0.144203568 24.35452
+23    3          nonconformity      Top 5  3.415644e-03 0.003634148 24.35452
+24    3 nonconformity.localAND      Top 5 -3.297850e-02 0.012437229 24.35452
+25    4              deference   Complete -2.867885e-01 0.058117363 58.31382
+26    4          nonconformity   Complete  1.740682e-03 0.002911131 58.31382
+27    4 nonconformity.localAND   Complete -3.527016e-02 0.007845482 58.31382
+28    4              deference      Top 5 -4.797188e-01 0.182088184 27.78364
+29    4          nonconformity      Top 5  3.427131e-03 0.002931944 27.78364
+30    4 nonconformity.localAND      Top 5 -4.091914e-02 0.011449921 27.78364
+31    5              deference   Complete -2.575888e-01 0.061527511 70.14309
+32    5          nonconformity   Complete  1.147285e-03 0.002881762 70.14309
+33    5 nonconformity.localAND   Complete -3.933484e-02 0.008304460 70.14309
+34    5              deference      Top 5 -2.924811e-01 0.098766321 23.77508
+35    5          nonconformity      Top 5  1.283853e-03 0.003792835 23.77508
+36    5 nonconformity.localAND      Top 5 -4.024410e-02 0.015793935 23.77508
+37    6              deference   Complete -2.398697e-01 0.057576722 66.19996
+38    6          nonconformity   Complete -2.342285e-04 0.002836895 66.19996
+39    6 nonconformity.localAND   Complete -3.596685e-02 0.007929725 66.19996
+40    6              deference      Top 5 -3.433682e-01 0.135514984 22.96884
+41    6          nonconformity      Top 5 -6.125235e-03 0.003326286 22.96884
+42    6 nonconformity.localAND      Top 5 -9.045184e-03 0.013683020 22.96884
+43    7              deference   Complete -3.941843e-01 0.087061031 88.22744
+44    7          nonconformity   Complete  3.318641e-03 0.002411110 88.22744
+45    7 nonconformity.localAND   Complete -4.523845e-02 0.007177932 88.22744
+46    7              deference      Top 5 -4.192282e-01 0.132619491 23.29738
+47    7          nonconformity      Top 5 -1.821435e-03 0.003769733 23.29738
+48    7 nonconformity.localAND      Top 5 -1.969532e-02 0.014011845 23.29738
+49    8              deference   Complete -3.792371e-01 0.074401252 76.31725
+50    8          nonconformity   Complete  1.299565e-03 0.002479717 76.31725
+51    8 nonconformity.localAND   Complete -3.676857e-02 0.007370880 76.31725
+52    8              deference      Top 5 -4.820567e-01 0.168519074 26.59560
+53    8          nonconformity      Top 5 -2.228760e-03 0.003621737 26.59560
+54    8 nonconformity.localAND      Top 5 -2.254968e-02 0.014105723 26.59560
+55   10              deference   Complete -3.125976e-01 0.065544924 81.68622
+56   10          nonconformity   Complete  2.877719e-03 0.002615073 81.68622
+57   10 nonconformity.localAND   Complete -4.580629e-02 0.007676495 81.68622
+58   10              deference      Top 5 -7.013590e-01 0.287530252 33.60149
+59   10          nonconformity      Top 5  2.858001e-03 0.002760323 33.60149
+60   10 nonconformity.localAND      Top 5 -4.194712e-02 0.012200345 33.60149
+61   11              deference   Complete -2.583767e-01 0.058605677 74.29978
+62   11          nonconformity   Complete  2.542429e-03 0.002489137 74.29978
+63   11 nonconformity.localAND   Complete -4.491320e-02 0.007505415 74.29978
+64   11              deference      Top 5 -3.432158e-01 0.118411344 18.55111
+65   11          nonconformity      Top 5 -6.692289e-05 0.004138009 18.55111
+66   11 nonconformity.localAND      Top 5 -2.634733e-02 0.015399970 18.55111
+67   12              deference   Complete -3.029289e-01 0.066175186 72.97604
+68   12          nonconformity   Complete -2.812189e-04 0.002685232 72.97604
+69   12 nonconformity.localAND   Complete -3.479958e-02 0.007986509 72.97604
+70   12              deference      Top 5 -3.419582e-01 0.126244799 23.33053
+71   12          nonconformity      Top 5 -5.857328e-03 0.003300342 23.33053
+72   12 nonconformity.localAND      Top 5 -8.688114e-03 0.012464863 23.33053
+73   13              deference   Complete -1.769652e-01 0.050956537 64.76060
+74   13          nonconformity   Complete  2.869223e-03 0.002877667 64.76060
+75   13 nonconformity.localAND   Complete -4.715455e-02 0.007939138 64.76060
+76   13              deference      Top 5 -4.025847e-01 0.131524853 20.12842
+77   13          nonconformity      Top 5 -3.077220e-03 0.003610972 20.12842
+78   13 nonconformity.localAND      Top 5 -1.340269e-02 0.013531771 20.12842
+79   14              deference   Complete -3.800562e-01 0.076377685 91.23520
+80   14          nonconformity   Complete  2.175253e-03 0.002644569 91.23520
+81   14 nonconformity.localAND   Complete -4.410209e-02 0.007782258 91.23520
+82   14              deference      Top 5 -4.839328e-01 0.168275881 22.86095
+83   14          nonconformity      Top 5 -1.382122e-03 0.003506075 22.86095
+84   14 nonconformity.localAND      Top 5 -2.225081e-02 0.011879313 22.86095
+85   15              deference   Complete -3.340926e-01 0.076405369 90.63011
+86   15          nonconformity   Complete  1.080920e-03 0.002663920 90.63011
+87   15 nonconformity.localAND   Complete -4.397448e-02 0.007405866 90.63011
+88   15              deference      Top 5 -5.053431e-01 0.174569878 31.40985
+89   15          nonconformity      Top 5 -1.691385e-03 0.003489704 31.40985
+90   15 nonconformity.localAND      Top 5 -2.703184e-02 0.014457685 31.40985
 
-Total computational time: 1316.33 seconds
+Total computational time: 4865.04 seconds

@@ -65,7 +65,47 @@ for (week in 1:15) {
 
 compare_list <- list()
 
-for (i in 1:15) {
+for (i in 1:9) {
+  if (inherits(fit_true[[i]], "ergm") && inherits(fit_constrained[[i]], "ergm")) {
+    # Extract coefficients and SEs
+    coefs_true <- coef(fit_true[[i]])
+    coefs_constrained <- coef(fit_constrained[[i]])
+
+    se_true <- sqrt(diag(vcov(fit_true[[i]])))
+    se_constrained <- sqrt(diag(vcov(fit_constrained[[i]])))
+
+    # Log-likelihoods
+    logLik_true <- as.numeric(logLik(fit_true[[i]]))
+    logLik_constrained <- as.numeric(logLik(fit_constrained[[i]]))
+
+    # Combine into a data frame (one row per parameter × model type)
+    df_week <- data.frame(
+      week = i - 1,
+      term = rep(names(coefs_true), 2),
+      model_type = rep(c("Complete", "Top 5"), each = length(coefs_true)),
+      estimate = c(coefs_true, coefs_constrained),
+      se = c(se_true, se_constrained),
+      logLik = rep(c(logLik_true, logLik_constrained), each = length(coefs_true))
+    )
+
+    compare_list[[i]] <- df_week
+  }
+}
+
+all_terms <- c("edges", "deference", "nonconformity", "nonconformity.localAND")
+
+df_week9 <- data.frame(
+  week = 9,
+  term = rep(all_terms, 2),          # same terms as other weeks
+  model_type = rep(c("Complete", "Top 5"), each = length(all_terms)),
+  estimate = NA,
+  se = NA,
+  lower = NA,
+  upper = NA,
+  logLik = NA
+)
+
+for (i in 10:15) {
   if (inherits(fit_true[[i]], "ergm") && inherits(fit_constrained[[i]], "ergm")) {
     # Extract coefficients and SEs
     coefs_true <- coef(fit_true[[i]])
@@ -120,10 +160,9 @@ library(ggplot2)
 
 p <- ggplot(compare_df, aes(x = week, y = estimate,
                             color = model_type, group = model_type)) +
-  geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = model_type),
-              alpha = 0.2, color = NA) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, color = model_type),
+                width = 0.15) +
   facet_wrap(~ term, ncol = 1, scales = "free_y") + 
   theme_minimal(base_size = 14) +
   labs(
