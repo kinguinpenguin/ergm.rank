@@ -39,6 +39,7 @@ InitWtErgmProposal.AdjacentAlterSwap <- function(arguments, nw) {
 }
 
 InitWtErgmProposal.PartialDisc <- function(arguments, nw) {
+  M <- arguments$constraints$ranking$M
   list(name = "PartialDisc", iinputs = unlist(arguments$reference$arguments),
        dyadgen = ergm_dyadgen_select(arguments, nw))
 }
