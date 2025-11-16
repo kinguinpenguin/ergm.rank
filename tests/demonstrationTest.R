@@ -55,7 +55,6 @@ for (week in 1:15) {
               response="descrank",
               reference=~CompleteOrder,
               constraints = ~ adjacent, # Sample space: make adjacent swap proposals.
-              obs.constraints = ~ ranking(newcomb2.top5), # For the constrained sampler, *also* constrain ranking.
               control = snctrl(init.method = "zeros")
   )
 
