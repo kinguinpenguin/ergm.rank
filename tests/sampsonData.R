@@ -1,15 +1,9 @@
+start_time <- Sys.time()
 library(ergm)
 library(ergm.rank)
 data(sampson)
 data(samplk)
-adj1 <- as.matrix(samplk1, attrname = "score")
-adj2 <- as.matrix(samplk2, attrname = "score")
-adj3 <- as.matrix(samplk3, attrname = "score")
-adj4 <- as.matrix(sampdlk1, attrname = "score")
-adj5 <- as.matrix(sampdlk2, attrname = "score")
-adj6 <- as.matrix(sampdlk3, attrname = "score")
 networks <- list(samplk1, samplk2, samplk3, sampdlk1, sampdlk2, sampdlk3)
-matrices <- list(adj1, adj2, adj3, adj4, adj5, adj6)
 complete_ordering <- function(nw, attrname, ref = as.matrix(nw, attrname = attrname)) { 
   diag(ref) <- NA
   r <- apply(ref, 1L, rank, ties.method = "random", na.last = "keep") |>
@@ -22,15 +16,22 @@ fit_list <- list()
 for (i in 1:6) {
   cat(sprintf("Network %d\n", i))
   nw <- networks[[i]]
-  mat <- matrices[[i]]
-  fit <- ergm(complete_ordering(nw, "score") ~ rank.deference+rank.nonconformity("all")+
-                rank.nonconformity("localAND"),
-               response = "score",
-               reference = ~CompleteOrder,
-               constraints = ~ adjacent,
-               obs.constraints = ~ ranking(mat),
-               control = snctrl(init.method = "zeros")
+  
+  # Complete ranking network
+  nw_ranked <- complete_ordering(nw, "score")
+  
+  # Ranking matrix matches the completed network
+  rank_mat <- as.matrix(nw_ranked, attrname = "score")
+  
+  fit <- ergm(
+    nw_ranked ~ rank.deference + rank.nonconformity("all") + rank.nonconformity("localAND"),
+    response = "score",
+    reference = ~CompleteOrder,
+    constraints = ~ adjacent,
+    obs.constraints = ~ ranking(rank_mat),
+    control = snctrl(init.method = "zeros")
   )
+  
   fit_list[[i]] <- fit
 }
 output_file <- "tests/sampson/sampson_simulation.txt"
@@ -105,6 +106,11 @@ for (i in 4:6) {
 compare_df <- do.call(rbind, compare_list)
 print(compare_df)
 capture.output(print(compare_df), file = "tests/sampson/sampson_simulation.txt")
+
+end_time <- Sys.time()
+total_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
+cat("\nTotal computational time:", round(total_time, 2), "seconds\n",
+    file = "tests/sampson/sampson_simulation.txt", append = TRUE)
 
 
 ### ---- SPLIT INTO LIKE & DISLIKE ---- ###
